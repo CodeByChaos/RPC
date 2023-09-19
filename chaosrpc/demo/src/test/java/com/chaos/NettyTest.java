@@ -12,9 +12,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class NettyTest {
 
+    /**
+     * 零拷贝
+     */
     @Test
     public void testByteBuf() {
         ByteBuf header = Unpooled.buffer(); // 模拟http请求头
@@ -47,6 +53,10 @@ public class NettyTest {
         ByteBuf buf2 = byteBuf.slice(6, 15);
     }
 
+    /**
+     * 封装报文
+     * @throws IOException
+     */
     @Test
     public void testMessage() throws IOException {
         ByteBuf message = Unpooled.buffer();
@@ -79,6 +89,43 @@ public class NettyTest {
             formattedBinary .append(binaryString.substring(i, i + 2)).append(" ");
         }
         System.out.println("Binary representation: " + formattedBinary.toString());
+    }
+
+    /**
+     * 压缩
+     */
+    @Test
+    public void testCompress() throws IOException {
+        byte[] buf = new byte[]{12, 12, 12, 12, 12,  25, 34, 23, 25, 14,
+                12, 12, 12, 12, 12,  25, 34, 23, 25, 14,
+                12, 12, 12, 12, 12,  25, 34, 23, 25, 14,
+                12, 12, 12, 12, 12,  25, 34, 23, 25, 14};
+
+        // 本质就是，将buf作为输入，将结果输出到另一个字节数组当中。
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
+        gzipOutputStream.write(buf);
+        gzipOutputStream.finish();
+
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+
+        System.out.println(buf.length + "---->" + bytes.length);
+        System.out.println(Arrays.toString(bytes));
+    }
+    /**
+     * 解压
+     */
+    @Test
+    public void testDeCompress() throws IOException {
+        byte[] buf = new byte[]{31, -117, 8, 0, 0, 0, 0, 0, 0, 0, -29, -31, 1, 2, 73, 37, 113, 73, 62, 30, -68, 44, 0, 35, -57, 10, 64, 40, 0, 0, 0};
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buf);
+        GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
+
+        byte[] bytes = gzipInputStream.readAllBytes();
+
+        System.out.println(buf.length + "---->" + bytes.length);
+        System.out.println(Arrays.toString(bytes));
     }
 
 }
