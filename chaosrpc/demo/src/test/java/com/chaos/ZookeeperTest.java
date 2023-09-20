@@ -1,18 +1,17 @@
 package com.chaos;
 
 import com.chaos.netty.MyWatcher;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 public class ZookeeperTest {
     ZooKeeper zooKeeper;
+    CountDownLatch countDownLatch = new CountDownLatch(1);
 
     /**
      * 初始化zookeeper
@@ -21,11 +20,20 @@ public class ZookeeperTest {
     public void createZK(){
         // 定义连接参数
         String connectionString = "127.0.0.1:2181";
+//        String connectionString = "192.168.121.1:2181,192.168.121.2:2181,192.168.121.3:2181";
         // 定义超时时间
         int timeout = 10000;
         try {
             // new MyWatcher是一个默认的监听器
-            zooKeeper = new ZooKeeper(connectionString, timeout, new MyWatcher());
+//            zooKeeper = new ZooKeeper(connectionString, timeout, new MyWatcher());
+            // 构件zookeeper是否需要等待连接
+            zooKeeper = new ZooKeeper(connectionString, timeout, watchedEvent -> {
+                // 只有连接成功才放行
+                if(watchedEvent.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                    System.out.println("客户端已经连接成功。");
+                    countDownLatch.countDown();
+                }
+            });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -37,6 +45,8 @@ public class ZookeeperTest {
     @Test
     public void testCreatePNode() {
         try{
+            // 会等待连接成功
+            countDownLatch.await();
             String result = zooKeeper.create("/chaos",
                     "hello".getBytes(),
                     ZooDefs.Ids.OPEN_ACL_UNSAFE,
