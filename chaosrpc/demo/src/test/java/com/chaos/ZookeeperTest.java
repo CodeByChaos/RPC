@@ -1,5 +1,6 @@
 package com.chaos;
 
+import com.chaos.netty.MyWatcher;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -23,7 +24,8 @@ public class ZookeeperTest {
         // 定义超时时间
         int timeout = 10000;
         try {
-            zooKeeper = new ZooKeeper(connectionString, timeout, null);
+            // new MyWatcher是一个默认的监听器
+            zooKeeper = new ZooKeeper(connectionString, timeout, new MyWatcher());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -92,6 +94,33 @@ public class ZookeeperTest {
             // 当前子节点数据的版本
             int cversion = stat.getCversion();
             System.out.println("cversion = " + cversion);
+        } catch (KeeperException | InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if(zooKeeper != null) {
+                    zooKeeper.close();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 测试watcher机制
+     */
+    @Test
+    public void testWatcher() {
+        try{
+            // 以下三个方法可以注册watcher，可以直接new一个新的watcher，
+            // 也可以使用true来选定默认的watcher
+            zooKeeper.exists("/chaos", true);
+//            zooKeeper.getChildren();
+//            zooKeeper.getData();
+            while (true) {
+                Thread.sleep(1000);
+            }
         } catch (KeeperException | InterruptedException e) {
             e.printStackTrace();
         } finally {
