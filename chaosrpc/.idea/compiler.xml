@@ -6,8 +6,17 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="demo" />
+        <module name="chaosrpc-api" />
+        <module name="chaosrpc-core" />
+        <module name="chaosrpc-manager" />
+        <module name="chaosrpc-provider-demo" />
+        <module name="chaosrpc-common" />
+        <module name="chaosrpc-consumer-demo" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="chaos-core" target="12" />
+      <module name="chaos-server-demo" target="12" />
+    </bytecodeTargetLevel>
   </component>
 </project>
