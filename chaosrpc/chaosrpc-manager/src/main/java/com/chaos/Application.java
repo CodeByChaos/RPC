@@ -1,7 +1,7 @@
 package com.chaos;
 
-import com.chaos.utils.ZookeeperNode;
-import com.chaos.utils.ZookeeperUtil;
+import com.chaos.utils.zookeeper.ZookeeperNode;
+import com.chaos.utils.zookeeper.ZookeeperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.*;
 
@@ -17,7 +17,7 @@ public class Application {
         try {
 
             // 创建一个zookeeper实例
-            ZooKeeper zooKeeper = ZookeeperUtil.createZooKeeper();
+            ZooKeeper zooKeeper = ZookeeperUtils.createZooKeeper();
             // 定义节点和数据
             String basePath = "/chaos-metadata";
             String providerPath = basePath + "/providers";
@@ -26,12 +26,12 @@ public class Application {
             ZookeeperNode providerNode = new ZookeeperNode(providerPath, null);
             ZookeeperNode consumerNode = new ZookeeperNode(consumerPath, null);
             List.of(baseNode, consumerNode, providerNode).forEach(node -> {
-                ZookeeperUtil.createNode(zooKeeper,
+                ZookeeperUtils.createNode(zooKeeper,
                         node, null,
                         ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
             });
-            ZookeeperUtil.close(zooKeeper);
+            ZookeeperUtils.close(zooKeeper);
 
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -1,4 +1,4 @@
-package com.chaos.utils;
+package com.chaos.utils.zookeeper;
 
 import com.chaos.Constant;
 import com.chaos.exceptions.ZookeeperException;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
-public class ZookeeperUtil {
+public class ZookeeperUtils {
 
     /**
      * 使用默认配置创建zookeeper实例
@@ -97,4 +97,19 @@ public class ZookeeperUtil {
         }
     }
 
+    /**
+     * 判断节点是否存在
+     * @param zooKeeper zookeeper实例
+     * @param node 节点路径
+     * @param watcher watcher
+     * @return true:exist false:not exist
+     */
+    public static boolean exists(ZooKeeper zooKeeper, String node, Watcher watcher) {
+        try {
+            return zooKeeper.exists(node, watcher) != null;
+        } catch (KeeperException | InterruptedException e) {
+            log.error("判断节点{}是否存在时发生异常", node, e);
+            throw new ZookeeperException(e);
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package com.chaos.utils;
+package com.chaos.utils.zookeeper;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
