@@ -5,7 +5,10 @@ import com.chaosrpc.discovery.RegistryConfig;
 import com.chaosrpc.discovery.impl.ZookeeperRegistry;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class ChaosrpcBootstrap {
@@ -19,8 +22,11 @@ public class ChaosrpcBootstrap {
     private ProtocolConfig protocolConfig;
     private int port = 8088;
 
-    // todo： 待处理
+    // 注册中心
     private Registry registry;
+
+    // 维护已经发布且暴露的服务列表 key->interface的全限定名 value->ServiceConfig
+    private static final Map<String, ServiceConfig<?>> SERVICE_LISTS = new ConcurrentHashMap<>();
 
     // 维护一个ZooKeeper实例
 //    private ZooKeeper zooKeeper;
@@ -81,6 +87,10 @@ public class ChaosrpcBootstrap {
     public ChaosrpcBootstrap publish(ServiceConfig<?> service) {
         // 我们抽象了注册中心的概念，使用注册中心的一个实现完成注册
         registry.register(service);
+
+        // 1.当服务调用方，通过接口、方法名、具体的方法参数列表发起调用，提供怎么知道使用哪一个实现
+        //  (1)new 一个   (2)spring beanFactory.getBean(Class)    (3)自己维护映射关系
+        SERVICE_LISTS.put(service.getInterface().getName(), service);
         return this;
     }
 
