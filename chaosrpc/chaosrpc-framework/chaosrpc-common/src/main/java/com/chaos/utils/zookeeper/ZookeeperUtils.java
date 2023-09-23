@@ -112,4 +112,19 @@ public class ZookeeperUtils {
             throw new ZookeeperException(e);
         }
     }
+
+    /**
+     * 查询一个节点的子元素
+     * @param zooKeeper zookeeper实例
+     * @param serviceNode 服务节点
+     * @return 资源数列表
+     */
+    public static List<String> getChildren(ZooKeeper zooKeeper, String serviceNode, Watcher watcher) {
+        try {
+            return zooKeeper.getChildren(serviceNode, watcher);
+        } catch (KeeperException | InterruptedException e) {
+            log.error("获取节点{}的子元素发生异常",serviceNode, e);
+            throw new ZookeeperException(e);
+        }
+    }
 }

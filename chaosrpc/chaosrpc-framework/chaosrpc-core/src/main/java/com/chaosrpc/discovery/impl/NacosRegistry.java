@@ -11,6 +11,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 
+import java.net.InetSocketAddress;
+
 @Slf4j
 public class NacosRegistry extends AbstractRegistry {
 
@@ -53,5 +55,10 @@ public class NacosRegistry extends AbstractRegistry {
         if(log.isDebugEnabled()){
             log.debug("服务{}，已经被注册", service.getInterface().getName());
         }
+    }
+
+    @Override
+    public InetSocketAddress lookup(String serviceName) {
+        return null;
     }
 }

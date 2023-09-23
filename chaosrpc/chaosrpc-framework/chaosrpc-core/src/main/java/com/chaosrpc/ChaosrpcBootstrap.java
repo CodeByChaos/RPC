@@ -2,10 +2,8 @@ package com.chaosrpc;
 
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.discovery.RegistryConfig;
-import com.chaosrpc.discovery.impl.ZookeeperRegistry;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +15,7 @@ public class ChaosrpcBootstrap {
     private static final ChaosrpcBootstrap bootstrap = new ChaosrpcBootstrap();
 
     // 定义一些相关的基础配置
-    private String applicationName = "default";
+    private String applicationName;
     private RegistryConfig registryConfig;
     private ProtocolConfig protocolConfig;
     private int port = 8088;
@@ -111,7 +109,7 @@ public class ChaosrpcBootstrap {
      */
     public void start() {
         try {
-            Thread.sleep(10000);
+            Thread.sleep(1000000000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -123,6 +121,8 @@ public class ChaosrpcBootstrap {
     public ChaosrpcBootstrap reference(ReferenceConfig<?> reference){
         // 在这个方法里我们是否可以拿到相关的配置项--注册中心
         // 配置reference，将来调用get方法时，方便生成代理对象
+        // 1.reference需要一个注册中心
+        reference.setRegistry(registry);
         return this;
     }
 }

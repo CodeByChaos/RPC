@@ -1,6 +1,8 @@
 package com.chaosrpc.discovery.impl;
 
 import com.chaos.Constant;
+import com.chaos.exceptions.DiscoveryException;
+import com.chaos.exceptions.NetworkException;
 import com.chaos.utils.NetUtils;
 import com.chaos.utils.zookeeper.ZookeeperNode;
 import com.chaos.utils.zookeeper.ZookeeperUtils;
@@ -10,6 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ZookeeperRegistry extends AbstractRegistry {
@@ -53,5 +60,26 @@ public class ZookeeperRegistry extends AbstractRegistry {
         if(log.isDebugEnabled()){
             log.debug("服务{}，已经被注册", service.getInterface().getName());
         }
+    }
+
+    @Override
+    public InetSocketAddress lookup(String serviceName) {
+        // 1.找到服务对应的节点
+        String serviceNode = Constant.BASE_PROVIDER_PATH + "/" + serviceName;
+
+        // 2.从zookeeper中获取他的子节点 192.168.12.123:2151
+        List<String> children = ZookeeperUtils.getChildren(zooKeeper, serviceNode, null);
+        List<InetSocketAddress> inetSocketAddresses = children.stream().map(ipString -> {
+            String[] ipAndPort = ipString.split(":");
+            String ip = ipAndPort[0];
+            int port = Integer.parseInt(ipAndPort[1]);
+            return new InetSocketAddress(ip, port);
+        }).collect(Collectors.toList());
+        if (inetSocketAddresses.size() == 0) {
+            throw new DiscoveryException("未发现任何可用的服务主机。");
+        }
+        // todo q:我们每次调用相关方法的时候都需要去注册中心拉取服务列表吗？ 本地缓存 + watcher
+        // todo q:我们如何合理选择一个可用的服务，而不是只获取第一个？ 负载均衡策略
+        return inetSocketAddresses.get(0);
     }
 }

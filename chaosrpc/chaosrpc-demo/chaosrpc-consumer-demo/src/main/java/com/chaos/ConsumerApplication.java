@@ -4,7 +4,7 @@ import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.ReferenceConfig;
 import com.chaosrpc.discovery.RegistryConfig;
 
-public class Application {
+public class ConsumerApplication {
     public static void main(String[] args) {
         // 想尽一切办法获取代理对象，使用ReferenceConfig进行封装
         // reference一定用代理的模板方法，get()
