@@ -1,13 +1,9 @@
 package com.chaosrpc;
 
-import com.chaos.Constant;
-import com.chaos.utils.NetUtils;
-import com.chaos.utils.zookeeper.ZookeeperNode;
-import com.chaos.utils.zookeeper.ZookeeperUtils;
+import com.chaosrpc.discovery.Registry;
+import com.chaosrpc.discovery.RegistryConfig;
+import com.chaosrpc.discovery.impl.ZookeeperRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 
 import java.util.List;
 
@@ -23,8 +19,11 @@ public class ChaosrpcBootstrap {
     private ProtocolConfig protocolConfig;
     private int port = 8088;
 
+    // todo： 待处理
+    private Registry registry;
+
     // 维护一个ZooKeeper实例
-    private ZooKeeper zooKeeper;
+//    private ZooKeeper zooKeeper;
 
     private ChaosrpcBootstrap() {
         // 构造启动引导程序时需要做一些什么初始化的事
@@ -51,11 +50,9 @@ public class ChaosrpcBootstrap {
      * @return this 当前实例
      */
     public ChaosrpcBootstrap registry(RegistryConfig registryConfig) {
-        // 这里维护一个zookeeper实例，但是会与当前工程耦合
-        // 其实更希望以后可以扩展更多种不同的实现
-        zooKeeper = ZookeeperUtils.createZooKeeper();
 
-        this.registryConfig = registryConfig;
+        // 尝试使用 registryConfig 获取一个注册中心，有点工厂设计模式
+        this.registry = registryConfig.getRegistry();
         return this;
     }
 
@@ -82,39 +79,20 @@ public class ChaosrpcBootstrap {
      * @return this 当前实例
      */
     public ChaosrpcBootstrap publish(ServiceConfig<?> service) {
-
-        // 服务名称的节点
-        String parentNode = Constant.BASE_PROVIDER_PATH + "/" + service.getInterface().getName();
-        // 这个节点应该是一个持久节点
-        if(!ZookeeperUtils.exists(zooKeeper, parentNode, null)) {
-            ZookeeperNode zookeeperNode = new ZookeeperNode(parentNode, null);
-            ZookeeperUtils.createNode(zooKeeper, zookeeperNode, null,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }
-
-        // 创建本机的临时节点，ip:port
-        // 服务提供方的端口一般直接设定，我们还需要一个获取ip地址的方法。
-        // ip通常是需要一个局域网ip，不是127.0.0.1，也不是ipv6
-        // 192.168.121.121
-        String temporaryNode = parentNode + "/" + NetUtils.getIpAddress() + ":" + port;
-        if(!ZookeeperUtils.exists(zooKeeper, temporaryNode, null)) {
-            ZookeeperNode node = new ZookeeperNode(temporaryNode, null);
-            ZookeeperUtils.createNode(zooKeeper, node, null,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        }
-
-        if(log.isDebugEnabled()){
-            log.debug("服务{}，已经被注册", service.getInterface().getName());
-        }
+        // 我们抽象了注册中心的概念，使用注册中心的一个实现完成注册
+        registry.register(service);
         return this;
     }
 
     /**
      * 批量发布 将接口实现，注册到服务中心
-     * @param service 封装需要发布的服务集合
+     * @param services 封装需要发布的服务集合
      * @return this 当前实例
      */
-    public ChaosrpcBootstrap publish(List<?> service) {
+    public ChaosrpcBootstrap publish(List<ServiceConfig<?>> services) {
+        for (ServiceConfig<?> service : services) {
+            this.publish(service);
+        }
         return this;
     }
 

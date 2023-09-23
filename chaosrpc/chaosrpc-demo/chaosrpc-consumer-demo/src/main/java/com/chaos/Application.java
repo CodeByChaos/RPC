@@ -2,7 +2,7 @@ package com.chaos;
 
 import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.ReferenceConfig;
-import com.chaosrpc.RegistryConfig;
+import com.chaosrpc.discovery.RegistryConfig;
 
 public class Application {
     public static void main(String[] args) {

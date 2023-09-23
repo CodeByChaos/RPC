@@ -3,7 +3,7 @@ package com.chaos;
 import com.chaos.impl.HelloChaosrpcImpl;
 import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.ProtocolConfig;
-import com.chaosrpc.RegistryConfig;
+import com.chaosrpc.discovery.RegistryConfig;
 import com.chaosrpc.ServiceConfig;
 
 public class Application {
