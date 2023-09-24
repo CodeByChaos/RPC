@@ -2,6 +2,7 @@ package com.chaosrpc;
 
 import com.chaos.exceptions.NetworkException;
 import com.chaosrpc.discovery.Registry;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -101,8 +102,16 @@ public class ReferenceConfig<T> {
                     ChaosrpcBootstrap.CHANNEL_CACHE.put(address, channel);
                 }
                 if(channel == null) {
+                    log.error("获取或建立{}的channel时发生了异常", address);
                     throw new NetworkException("获取channel时发生了异常");
                 }
+
+                /*
+                 * --------------封装报文--------------
+                 */
+
+
+
                 /*
                  * --------------同步策略--------------
                  */
@@ -121,8 +130,9 @@ public class ReferenceConfig<T> {
                  * --------------异步策略--------------
                  */
                 CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-                // todo 需要将 completableFuture 暴露出去
-                channel.writeAndFlush(new Object())
+                // 需要将 completableFuture 暴露出去
+                ChaosrpcBootstrap.PENDING_REQUEST.put(1L, completableFuture);
+                channel.writeAndFlush(Unpooled.copiedBuffer("hello".getBytes()))
                         .addListener((ChannelFutureListener)promise -> {
                             /*
                             当前的promise将来的返回结果是什么？writeAndFlush的返回结果
@@ -138,6 +148,9 @@ public class ReferenceConfig<T> {
                                 completableFuture.completeExceptionally(promise.cause());
                             }
                         });
+//                Object o = completableFuture.get(3, TimeUnit.SECONDS);
+                // 如果没有地方处理 completableFuture 这里会阻塞，等待complete()的执行
+                // q:需要在哪调用complete方法得到结果，很明显 pipeline 中最终的handler的处理结果
                 return completableFuture.get(3, TimeUnit.SECONDS);
             }
         });

@@ -23,6 +23,7 @@ public class ConsumerApplication {
 
         // 获取一个代理对象
         HelloChaosrpc helloChaosrpc = reference.get();
-        helloChaosrpc.sayHi("你好");
+        String s = helloChaosrpc.sayHi("你好");
+        System.out.println(s);
     }
 }

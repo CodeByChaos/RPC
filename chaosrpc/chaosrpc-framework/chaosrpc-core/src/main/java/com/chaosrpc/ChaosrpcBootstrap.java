@@ -3,18 +3,19 @@ package com.chaosrpc;
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.discovery.RegistryConfig;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -37,6 +38,9 @@ public class ChaosrpcBootstrap {
 
     // 维护已经发布且暴露的服务列表 key->interface的全限定名 value->ServiceConfig
     private static final Map<String, ServiceConfig<?>> SERVICE_LISTS = new ConcurrentHashMap<>();
+
+    // 定义全局的对外挂起的 completableFuture
+    public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
     // 维护一个ZooKeeper实例
 //    private ZooKeeper zooKeeper;
@@ -141,7 +145,18 @@ public class ChaosrpcBootstrap {
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             // 核心，我们需要添加很多入栈和出栈的handler
                             // 配置childHandler来通知一个关于消息处理的InfoServerHandler实例
-                            socketChannel.pipeline().addLast(null);
+                            socketChannel.pipeline().addLast(new SimpleChannelInboundHandler<>() {
+                                @Override
+                                protected void channelRead0(ChannelHandlerContext channelHandlerContext,
+                                                            Object msg) throws Exception {
+                                    ByteBuf byteBuf = (ByteBuf) msg;
+                                    log.info("ByteBuf---->{}", byteBuf.toString(Charset.defaultCharset()));
+
+                                    channelHandlerContext
+                                            .channel()
+                                            .writeAndFlush(Unpooled.copiedBuffer("chaos--->hello".getBytes()));
+                                }
+                            });
                         }
                     });
 
