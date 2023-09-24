@@ -31,7 +31,9 @@ public class NetUtils {
                         continue;
                     }
                     ipAddress = address.getHostAddress();
-
+                    if(log.isDebugEnabled()) {
+                        log.debug("局域网IP地址：{}", ipAddress);
+                    }
                 }
             }
         } catch (SocketException e) {

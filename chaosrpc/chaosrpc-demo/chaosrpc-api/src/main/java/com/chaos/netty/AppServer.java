@@ -22,7 +22,7 @@ public class AppServer {
         // 1.创建eventLoop，老板只负责处理请求，之后会将请求分发至worker
         // 官方默认boss:worker 1:5
         EventLoopGroup boss = new NioEventLoopGroup(2);
-        EventLoopGroup worker = new NioEventLoopGroup(5);
+        EventLoopGroup worker = new NioEventLoopGroup(10);
         try {
             // 2.需要一个服务器引导程序
             ServerBootstrap serverBootstrap = new ServerBootstrap();

@@ -1,7 +1,9 @@
 package com.chaosrpc;
 
+import com.chaos.exceptions.NetworkException;
 import com.chaosrpc.discovery.Registry;
-import com.chaosrpc.discovery.RegistryConfig;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationHandler;
@@ -56,8 +58,27 @@ public class ReferenceConfig<T> {
                     log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
                 }
                 // 2.使用netty连接服务器，发送调用的服务的名字+方法名字+参数列表，得到结果
+                // 定义线程池，EventLoopGroup
+                // todo q:整个连接过程放在此处是否可行？也就意味着每次调用都会产生一个新的netty连接。如何缓存我们的连接？
+                //  也就意味着，每次在此处建立一个新的连接是不合适的
+                //  解决方案？缓存channel，尝试从缓存中获取channel，如果未获取，则创建新的连接，并进行缓存
+                // 1.尝试从全局缓存中获取一个channel
+                Channel channel = ChaosrpcBootstrap.CHANNEL_CACHE.get(address);
+                if(channel == null) {
+                    // await()方法会阻塞，会等待连接成功再返回，netty还提供了异步处理的逻辑
+                    channel = NettyBootstrapInitializer.getBootstrap()
+                            .connect(address)
+                            .await()
+                            .channel();
+                    // 缓存channel
+                    ChaosrpcBootstrap.CHANNEL_CACHE.put(address, channel);
+                }
+                if(channel == null) {
+                    throw new NetworkException("获取channel时发生了异常");
+                }
+                ChannelFuture channelFuture = channel.writeAndFlush(new Object());
 
-                System.out.println("hello proxy");
+
                 return null;
             }
         });
