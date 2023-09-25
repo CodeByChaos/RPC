@@ -2,6 +2,17 @@
 
 发送报文 writeAndFlush(Object) 请求
 
+此Object应该是什么？应该包含一些什么样的信息？
+
+ChaosrpcRequest
+(
+a.请求id(long)
+b.压缩类型(byte)
+c.序列化的方式
+d.消息类型（普通请求、心跳检测请求）
+f.负载 playload (接口的名字，方法的名字，参数列表，返回值类型)
+)
+
 pipeline就生效了，报文开始出站
 
 ----> 第一个处理器（out）(转换 Object --> msg(请求报文))
