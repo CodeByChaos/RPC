@@ -5,6 +5,7 @@ import com.chaos.exceptions.NetworkException;
 import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.NettyBootstrapInitializer;
 import com.chaosrpc.discovery.Registry;
+import com.chaosrpc.enumeration.RequestType;
 import com.chaosrpc.transport.message.ChaosrpcRequest;
 import com.chaosrpc.transport.message.RequestPlayload;
 import io.netty.buffer.Unpooled;
@@ -78,7 +79,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         ChaosrpcRequest chaosrpcRequest = ChaosrpcRequest.builder()
                 .requestId(1L)
                 .compressType((byte) 1)
-                .requestType((byte) 1)
+                .requestType(RequestType.REQUEST.getId())
                 .serializeType((byte) 1)
                 .requestPlayload(requestPlayload)
                 .build();
