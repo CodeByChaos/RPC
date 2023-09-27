@@ -20,6 +20,9 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<ChaosrpcReque
         RequestPlayload requestPlayload = chaosrpcRequest.getRequestPlayload();
         // 2.根据负载内容进行方法调用
         Object object = callTargetMethod(requestPlayload);
+        if(log.isDebugEnabled()) {
+            log.debug("请求{}已经在服务端完成方法调用.", chaosrpcRequest.getRequestId());
+        }
         // 3.封装响应
 
         // 4.写出响应

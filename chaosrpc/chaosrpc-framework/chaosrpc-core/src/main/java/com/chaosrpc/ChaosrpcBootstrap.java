@@ -1,12 +1,11 @@
 package com.chaosrpc;
 
-import com.chaosrpc.channelHandler.handler.ChaosrpcMessageDecoder;
+import com.chaosrpc.channelHandler.handler.ChaosrpcRequestDecoder;
+import com.chaosrpc.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaosrpc.channelHandler.handler.MethodCallHandler;
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.discovery.RegistryConfig;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -15,7 +14,6 @@ import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -150,9 +148,10 @@ public class ChaosrpcBootstrap {
                             // 配置childHandler来通知一个关于消息处理的InfoServerHandler实例
                             socketChannel.pipeline()
                                     .addLast(new LoggingHandler())
-                                    .addLast(new ChaosrpcMessageDecoder())
+                                    .addLast(new ChaosrpcRequestDecoder())
                                     // 根据请求进行方法调用
-                                    .addLast(new MethodCallHandler());
+                                    .addLast(new MethodCallHandler())
+                                    .addLast(new ChaosrpcResponseEncoder());
                         }
                     });
 

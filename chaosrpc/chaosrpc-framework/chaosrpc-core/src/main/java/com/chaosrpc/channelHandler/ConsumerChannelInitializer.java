@@ -1,6 +1,7 @@
 package com.chaosrpc.channelHandler;
 
-import com.chaosrpc.channelHandler.handler.ChaosrpcMessageEncoder;
+import com.chaosrpc.channelHandler.handler.ChaosrpcRequestEncoder;
+import com.chaosrpc.channelHandler.handler.ChaosrpcResponseDecoder;
 import com.chaosrpc.channelHandler.handler.MySimpleChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -14,7 +15,10 @@ public class ConsumerChannelInitializer extends ChannelInitializer<SocketChannel
                 // netty自带的日志处理器
                 .addLast(new LoggingHandler(LogLevel.DEBUG))
                 // 消息编码器
-                .addLast(new ChaosrpcMessageEncoder())
+                .addLast(new ChaosrpcRequestEncoder())
+                // 入栈的解码器
+                .addLast(new ChaosrpcResponseDecoder())
+                // 处理结果
                 .addLast(new MySimpleChannelInboundHandler());
     }
 

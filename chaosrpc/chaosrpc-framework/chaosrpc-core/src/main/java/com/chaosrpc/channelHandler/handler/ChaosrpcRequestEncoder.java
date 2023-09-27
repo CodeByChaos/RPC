@@ -1,6 +1,5 @@
 package com.chaosrpc.channelHandler.handler;
 
-import com.chaosrpc.enumeration.RequestType;
 import com.chaosrpc.transport.message.ChaosrpcRequest;
 import com.chaosrpc.transport.message.MessageFormatConstant;
 import com.chaosrpc.transport.message.RequestPlayload;
@@ -26,7 +25,7 @@ import java.io.ObjectOutputStream;
  * 出站时，第一个通过的处理器
  */
 @Slf4j
-public class ChaosrpcMessageEncoder extends MessageToByteEncoder<ChaosrpcRequest> {
+public class ChaosrpcRequestEncoder extends MessageToByteEncoder<ChaosrpcRequest> {
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext,
                           ChaosrpcRequest chaosrpcRequest,
@@ -38,7 +37,7 @@ public class ChaosrpcMessageEncoder extends MessageToByteEncoder<ChaosrpcRequest
         byteBuf.writeByte(MessageFormatConstant.VERSION);
         // 头部长度
         byteBuf.writeShort(MessageFormatConstant.HEADER_LENGTH);
-        // todo 不清楚总长度 writeIndex(写指针)
+        // 总长度 writeIndex(写指针)
         byteBuf.writerIndex(byteBuf.writerIndex() + MessageFormatConstant.FULL_FIELD_LENGTH);
         // 三个类型
         byteBuf.writeByte(chaosrpcRequest.getSerializeType());
@@ -72,6 +71,9 @@ public class ChaosrpcMessageEncoder extends MessageToByteEncoder<ChaosrpcRequest
 
         // 将写指针归位
         byteBuf.writerIndex(writeIndex);
+        if(log.isDebugEnabled()) {
+            log.debug("请求{}已经在调用端完成编码工作.", chaosrpcRequest.getRequestId());
+        }
     }
 
     private byte[] getBodyBytes(RequestPlayload requestPlayload) {

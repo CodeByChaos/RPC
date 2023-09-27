@@ -129,7 +129,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         // 如果没有地方处理 completableFuture 这里会阻塞，等待complete()的执行
         // q:需要在哪调用complete方法得到结果，很明显 pipeline 中最终的handler的处理结果
         // 获得响应的结果
-        return completableFuture.get(3, TimeUnit.SECONDS);
+        return completableFuture.get(10, TimeUnit.SECONDS);
     }
 
     /**

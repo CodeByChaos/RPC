@@ -12,14 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.nio.ByteOrder;
 
 /**
  * 基于长度字段的帧解码器
  */
 @Slf4j
-public class ChaosrpcMessageDecoder extends LengthFieldBasedFrameDecoder {
-    public ChaosrpcMessageDecoder() {
+public class ChaosrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
+    public ChaosrpcRequestDecoder() {
         super(
                 // 找到当前报文的总长度，截取报文，截取出来的报文我们可以去进行解析
                 // 最大帧的长度，超过这个 maxFrameLength 值会直接丢弃
@@ -110,6 +109,9 @@ public class ChaosrpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         } catch (IOException | ClassNotFoundException e) {
             log.error("请求{}反序列化时发生了异常。", requestId, e);
             throw new RuntimeException(e);
+        }
+        if(log.isDebugEnabled()) {
+            log.debug("请求{}已经在服务端完成解码工作.", chaosrpcRequest.getRequestId());
         }
         return chaosrpcRequest;
     }
