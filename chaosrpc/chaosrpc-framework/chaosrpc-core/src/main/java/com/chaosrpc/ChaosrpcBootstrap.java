@@ -1,5 +1,6 @@
 package com.chaosrpc;
 
+import com.chaos.IdGenerator;
 import com.chaosrpc.channelHandler.handler.ChaosrpcRequestDecoder;
 import com.chaosrpc.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaosrpc.channelHandler.handler.MethodCallHandler;
@@ -30,6 +31,8 @@ public class ChaosrpcBootstrap {
     private RegistryConfig registryConfig;
     private ProtocolConfig protocolConfig;
     private int port = 8088;
+
+    public static final IdGenerator ID_GENERATOR = new IdGenerator(1, 2);
 
     // 注册中心
     private Registry registry;
