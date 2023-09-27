@@ -12,4 +12,20 @@ public enum ResponseCode {
         this.code = code;
         this.description = description;
     }
+
+    public byte getCode() {
+        return code;
+    }
+
+    public void setCode(byte code) {
+        this.code = code;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }

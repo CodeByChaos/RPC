@@ -2,7 +2,9 @@ package com.chaosrpc.channelHandler.handler;
 
 import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.ServiceConfig;
+import com.chaosrpc.enumeration.ResponseCode;
 import com.chaosrpc.transport.message.ChaosrpcRequest;
+import com.chaosrpc.transport.message.ChaosrpcResponse;
 import com.chaosrpc.transport.message.RequestPlayload;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -19,14 +21,19 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<ChaosrpcReque
         // 1.获取负载内容
         RequestPlayload requestPlayload = chaosrpcRequest.getRequestPlayload();
         // 2.根据负载内容进行方法调用
-        Object object = callTargetMethod(requestPlayload);
+        Object result = callTargetMethod(requestPlayload);
         if(log.isDebugEnabled()) {
             log.debug("请求{}已经在服务端完成方法调用.", chaosrpcRequest.getRequestId());
         }
         // 3.封装响应
-
+        ChaosrpcResponse chaosrpcResponse = new ChaosrpcResponse();
+        chaosrpcResponse.setCode(ResponseCode.SUCCESS.getCode());
+        chaosrpcResponse.setRequestId(chaosrpcRequest.getRequestId());
+        chaosrpcResponse.setCompressType(chaosrpcRequest.getCompressType());
+        chaosrpcResponse.setSerializeType(chaosrpcRequest.getSerializeType());
+        chaosrpcResponse.setBody(result);
         // 4.写出响应
-        channelHandlerContext.channel().writeAndFlush(object);
+        channelHandlerContext.channel().writeAndFlush(chaosrpcResponse);
 
     }
 
