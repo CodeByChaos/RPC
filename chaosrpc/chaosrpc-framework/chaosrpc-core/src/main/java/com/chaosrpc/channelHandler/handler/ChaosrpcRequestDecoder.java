@@ -11,10 +11,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 /**
  * 基于长度字段的帧解码器
  */
@@ -73,12 +69,15 @@ public class ChaosrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
         // 4.解析总长度
         int fullLength = byteBuf.readInt();
 
-        // 5.请求类型 判断是不是心跳检测
-        byte requestType = byteBuf.readByte();
-        // 6.序列化类型
+        // 5.序列化类型
         byte serializeType = byteBuf.readByte();
-        // 7.压缩类型
+
+        // 6.压缩类型
         byte compressType = byteBuf.readByte();
+
+        // 7.请求类型 判断是不是心跳检测
+        byte requestType = byteBuf.readByte();
+
         // 8.请求id
         long requestId = byteBuf.readLong();
 

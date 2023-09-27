@@ -11,10 +11,13 @@ public class SerializerFactory {
     static {
         SerializeWrapper jdk = new SerializeWrapper((byte) 1, "jdk", new JdkSerializer());
         SerializeWrapper json = new SerializeWrapper((byte) 2, "json", new JsonSerializer());
+        SerializeWrapper hessian = new SerializeWrapper((byte) 3, "hessian", new HessianSerailizer());
         SERIALIZER_CACHE.put("jdk", jdk);
         SERIALIZER_CACHE.put("json", json);
+        SERIALIZER_CACHE.put("hessian", hessian);
         SERIALIZER_CACHE_CODE.put((byte) 1, jdk);
         SERIALIZER_CACHE_CODE.put((byte) 2, json);
+        SERIALIZER_CACHE_CODE.put((byte) 3, hessian);
     }
 
     /**
