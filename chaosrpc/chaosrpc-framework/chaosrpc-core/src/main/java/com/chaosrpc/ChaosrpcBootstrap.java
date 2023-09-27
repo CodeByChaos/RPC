@@ -46,6 +46,8 @@ public class ChaosrpcBootstrap {
     // 定义全局的对外挂起的 completableFuture
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
+    public static String SERIALIZE_TYPE = "jdk";
+
     // 维护一个ZooKeeper实例
 //    private ZooKeeper zooKeeper;
 
@@ -184,6 +186,18 @@ public class ChaosrpcBootstrap {
         // 配置reference，将来调用get方法时，方便生成代理对象
         // 1.reference需要一个注册中心
         reference.setRegistry(registry);
+        return this;
+    }
+
+    /**
+     * 配置序列化方式
+     * @param serializeType 序列化的方式
+     */
+    public ChaosrpcBootstrap serialize(String serializeType) {
+        SERIALIZE_TYPE = serializeType;
+        if(log.isDebugEnabled()) {
+            log.error("配置了序列化的方式为{}", serializeType);
+        }
         return this;
     }
 }

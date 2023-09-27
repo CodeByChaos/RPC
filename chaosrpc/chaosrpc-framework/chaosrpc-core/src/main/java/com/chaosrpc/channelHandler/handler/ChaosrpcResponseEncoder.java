@@ -1,5 +1,8 @@
 package com.chaosrpc.channelHandler.handler;
 
+import com.chaosrpc.serialize.SerializeWrapper;
+import com.chaosrpc.serialize.Serializer;
+import com.chaosrpc.serialize.SerializerFactory;
 import com.chaosrpc.transport.message.ChaosrpcResponse;
 import com.chaosrpc.transport.message.MessageFormatConstant;
 import io.netty.buffer.ByteBuf;
@@ -43,7 +46,15 @@ public class ChaosrpcResponseEncoder extends MessageToByteEncoder<ChaosrpcRespon
 //            return;
 //        }
         // 写入请求体（requestPlayload）
-        byte[] body = getBodyBytes(chaosrpcResponse.getBody());
+        // 对响应做序列化
+        Serializer serializer = SerializerFactory
+                .getSerializer(chaosrpcResponse.getSerializeType())
+                .getSerializer();
+        byte[] body = serializer.serialize(chaosrpcResponse.getBody());
+
+        // todo 压缩
+
+
         if(body != null) {
             // 重新处理报文总长度
             byteBuf.writeBytes(body);
@@ -63,25 +74,4 @@ public class ChaosrpcResponseEncoder extends MessageToByteEncoder<ChaosrpcRespon
         }
     }
 
-    private byte[] getBodyBytes(Object body) {
-        // 针对不同的消息类型需要做不同的处理，心跳的请求，没有playload
-        if(body == null) {
-            return null;
-        }
-        // 希望可以通过设计模式，面向对象的编程，让其可以配置修改序列化和压缩方式
-        // 对象怎么变成一个字节数据 序列化 压缩
-        try{
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream outputStream = new ObjectOutputStream(byteArrayOutputStream);
-            outputStream.writeObject(body);
-
-            // 压缩
-
-
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            log.error("序列化时出现异常");
-            throw new RuntimeException(e);
-        }
-    }
 }

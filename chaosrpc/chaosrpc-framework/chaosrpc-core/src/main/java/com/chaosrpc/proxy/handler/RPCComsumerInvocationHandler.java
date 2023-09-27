@@ -6,6 +6,7 @@ import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.NettyBootstrapInitializer;
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.enumeration.RequestType;
+import com.chaosrpc.serialize.SerializerFactory;
 import com.chaosrpc.transport.message.ChaosrpcRequest;
 import com.chaosrpc.transport.message.RequestPlayload;
 import io.netty.buffer.Unpooled;
@@ -75,12 +76,12 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
                 .parametersValue(args)
                 .returnType(method.getReturnType())
                 .build();
-        // todo：需要对各种请求id和各种类型做处理
+        // 需要对各种请求id和各种类型做处理
         ChaosrpcRequest chaosrpcRequest = ChaosrpcRequest.builder()
                 .requestId(ChaosrpcBootstrap.ID_GENERATOR.getId())
                 .compressType((byte) 1)
                 .requestType(RequestType.REQUEST.getId())
-                .serializeType((byte) 1)
+                .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.SERIALIZE_TYPE).getCode())
                 .requestPlayload(requestPlayload)
                 .build();
 

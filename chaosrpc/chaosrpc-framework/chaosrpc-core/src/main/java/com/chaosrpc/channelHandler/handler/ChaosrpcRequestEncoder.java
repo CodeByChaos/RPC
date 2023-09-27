@@ -1,5 +1,10 @@
 package com.chaosrpc.channelHandler.handler;
 
+import com.chaosrpc.ChaosrpcBootstrap;
+import com.chaosrpc.serialize.JdkSerializer;
+import com.chaosrpc.serialize.SerializeUtils;
+import com.chaosrpc.serialize.Serializer;
+import com.chaosrpc.serialize.SerializerFactory;
 import com.chaosrpc.transport.message.ChaosrpcRequest;
 import com.chaosrpc.transport.message.MessageFormatConstant;
 import com.chaosrpc.transport.message.RequestPlayload;
@@ -56,7 +61,14 @@ public class ChaosrpcRequestEncoder extends MessageToByteEncoder<ChaosrpcRequest
 //            return;
 //        }
         // 写入请求体（requestPlayload）
-        byte[] body = getBodyBytes(chaosrpcRequest.getRequestPlayload());
+        // 1.根据配置的序列化方式进行序列化
+        // 怎么实现序列化 1.工具类 耦合性高 很难替换序列化方式
+        Serializer serializer = SerializerFactory
+                .getSerializer(ChaosrpcBootstrap.SERIALIZE_TYPE)
+                .getSerializer();
+        byte[] body = serializer.serialize(chaosrpcRequest.getRequestPlayload());
+        // 2.根据配置的压缩方式进行压缩
+
         if(body != null) {
             // 重新处理报文总长度
             byteBuf.writeBytes(body);
@@ -76,25 +88,4 @@ public class ChaosrpcRequestEncoder extends MessageToByteEncoder<ChaosrpcRequest
         }
     }
 
-    private byte[] getBodyBytes(RequestPlayload requestPlayload) {
-        // 针对不同的消息类型需要做不同的处理，心跳的请求，没有playload
-        if(requestPlayload == null) {
-            return null;
-        }
-        // 希望可以通过设计模式，面向对象的编程，让其可以配置修改序列化和压缩方式
-        // 对象怎么变成一个字节数据 序列化 压缩
-        try{
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream outputStream = new ObjectOutputStream(byteArrayOutputStream);
-            outputStream.writeObject(requestPlayload);
-
-            // 压缩
-
-
-           return byteArrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            log.error("序列化时出现异常");
-            throw new RuntimeException(e);
-        }
-    }
 }

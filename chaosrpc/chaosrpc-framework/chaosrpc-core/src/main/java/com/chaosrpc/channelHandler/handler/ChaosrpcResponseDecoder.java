@@ -1,6 +1,8 @@
 package com.chaosrpc.channelHandler.handler;
 
 import com.chaosrpc.enumeration.RequestType;
+import com.chaosrpc.serialize.Serializer;
+import com.chaosrpc.serialize.SerializerFactory;
 import com.chaosrpc.transport.message.ChaosrpcRequest;
 import com.chaosrpc.transport.message.ChaosrpcResponse;
 import com.chaosrpc.transport.message.MessageFormatConstant;
@@ -98,18 +100,11 @@ public class ChaosrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         // todo 解压
 
         // todo 反序列化
-
-
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(playload);
-             ObjectInputStream ois = new ObjectInputStream(bis))
-        {
-            Object body = ois.readObject();
-            chaosrpcResponse.setBody(body);
-
-        } catch (IOException | ClassNotFoundException e) {
-            log.error("请求{}反序列化时发生了异常。", requestId, e);
-            throw new RuntimeException(e);
-        }
+        Serializer serializer = SerializerFactory
+                .getSerializer(chaosrpcResponse.getSerializeType())
+                .getSerializer();
+        Object body = serializer.disSerialize(playload, Object.class);
+        chaosrpcResponse.setBody(body);
         if(log.isDebugEnabled()) {
             log.debug("响应{}已经在调用端完成解码工作.", chaosrpcResponse.getRequestId());
         }
