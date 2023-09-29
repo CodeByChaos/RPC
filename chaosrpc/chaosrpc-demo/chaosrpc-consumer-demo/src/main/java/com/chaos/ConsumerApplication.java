@@ -19,7 +19,8 @@ public class ConsumerApplication {
         ChaosrpcBootstrap.getInstance()
                 .application("first-chaosrpc-consumer")
                 .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
-                .serialize("json")
+                .serialize("hessian")
+                .compress("gzip")
                 .reference(reference);
 
         // 获取一个代理对象

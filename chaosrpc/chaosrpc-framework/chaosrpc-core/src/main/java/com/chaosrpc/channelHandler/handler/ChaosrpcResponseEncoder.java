@@ -1,6 +1,7 @@
 package com.chaosrpc.channelHandler.handler;
 
-import com.chaosrpc.serialize.SerializeWrapper;
+import com.chaosrpc.compress.CompressFactory;
+import com.chaosrpc.compress.Compressor;
 import com.chaosrpc.serialize.Serializer;
 import com.chaosrpc.serialize.SerializerFactory;
 import com.chaosrpc.transport.message.ChaosrpcResponse;
@@ -9,10 +10,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 
 @Slf4j
 public class ChaosrpcResponseEncoder extends MessageToByteEncoder<ChaosrpcResponse> {
@@ -52,8 +49,9 @@ public class ChaosrpcResponseEncoder extends MessageToByteEncoder<ChaosrpcRespon
                 .getSerializer();
         byte[] body = serializer.serialize(chaosrpcResponse.getBody());
 
-        // todo 压缩
-
+        // 压缩
+        Compressor compressor = CompressFactory.getCompress(chaosrpcResponse.getCompressType()).getCompressor();
+        body = compressor.compress(body);
 
         if(body != null) {
             // 重新处理报文总长度

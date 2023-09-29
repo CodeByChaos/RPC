@@ -1,8 +1,14 @@
 package com.chaosrpc.serialize;
 
+import com.chaosrpc.serialize.impl.HessianSerailizer;
+import com.chaosrpc.serialize.impl.JdkSerializer;
+import com.chaosrpc.serialize.impl.JsonSerializer;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 public class SerializerFactory {
 
     private final static Map<String, SerializeWrapper> SERIALIZER_CACHE = new ConcurrentHashMap<>();
@@ -26,10 +32,20 @@ public class SerializerFactory {
      * @return 包装类
      */
     public static SerializeWrapper getSerializer(String serializeType) {
+        SerializeWrapper serializeWrapper = SERIALIZER_CACHE.get(serializeType);
+        if(serializeWrapper == null) {
+            log.error("未找到您配置的{}序列化策略，将使用默认序列化策略.", serializeType);
+            return SERIALIZER_CACHE.get("jdk");
+        }
         return SERIALIZER_CACHE.get(serializeType);
     }
 
     public static SerializeWrapper getSerializer(byte serializeCode) {
+        SerializeWrapper serializeWrapper = SERIALIZER_CACHE_CODE.get(serializeCode);
+        if(serializeWrapper == null) {
+            log.error("未找到您配置的{}序列化策略，将使用默认序列化策略.", serializeCode);
+            return SERIALIZER_CACHE.get("jdk");
+        }
         return SERIALIZER_CACHE_CODE.get(serializeCode);
     }
 }

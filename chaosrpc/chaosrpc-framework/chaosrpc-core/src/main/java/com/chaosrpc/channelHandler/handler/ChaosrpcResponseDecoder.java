@@ -1,20 +1,15 @@
 package com.chaosrpc.channelHandler.handler;
 
-import com.chaosrpc.enumeration.RequestType;
+import com.chaosrpc.compress.CompressFactory;
+import com.chaosrpc.compress.Compressor;
 import com.chaosrpc.serialize.Serializer;
 import com.chaosrpc.serialize.SerializerFactory;
-import com.chaosrpc.transport.message.ChaosrpcRequest;
 import com.chaosrpc.transport.message.ChaosrpcResponse;
 import com.chaosrpc.transport.message.MessageFormatConstant;
-import com.chaosrpc.transport.message.RequestPlayload;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
 @Slf4j
 public class ChaosrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
@@ -101,8 +96,9 @@ public class ChaosrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
 
         // 有了字节数组之后就可以解压缩，反序列化
         // todo 解压
-
-        // todo 反序列化
+        Compressor compressor = CompressFactory.getCompress(compressType).getCompressor();
+        playload = compressor.decompress(playload);
+        // 反序列化
         Serializer serializer = SerializerFactory
                 .getSerializer(chaosrpcResponse.getSerializeType())
                 .getSerializer();

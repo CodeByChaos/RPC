@@ -1,12 +1,13 @@
-package com.chaosrpc.serialize;
+package com.chaosrpc.serialize.impl;
 
 import com.chaos.exceptions.SerializeException;
+import com.chaosrpc.serialize.Serializer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 
 @Slf4j
-public class JdkSerializer implements Serializer{
+public class JdkSerializer implements Serializer {
     @Override
     public byte[] serialize(Object object) {
         if(object == null) {

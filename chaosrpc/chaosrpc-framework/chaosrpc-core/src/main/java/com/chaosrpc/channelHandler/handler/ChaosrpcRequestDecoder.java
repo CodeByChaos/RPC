@@ -1,5 +1,7 @@
 package com.chaosrpc.channelHandler.handler;
 
+import com.chaosrpc.compress.CompressFactory;
+import com.chaosrpc.compress.Compressor;
 import com.chaosrpc.enumeration.RequestType;
 import com.chaosrpc.serialize.Serializer;
 import com.chaosrpc.serialize.SerializerFactory;
@@ -99,7 +101,8 @@ public class ChaosrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
 
         // 有了字节数组之后就可以解压缩，反序列化
         // todo 解压
-
+        Compressor compressor = CompressFactory.getCompress(compressType).getCompressor();
+        playload = compressor.decompress(playload);
         // 反序列化
         // 1--->jdk
         Serializer serializer = SerializerFactory.getSerializer(serializeType).getSerializer();

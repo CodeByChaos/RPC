@@ -4,6 +4,7 @@ import com.chaos.exceptions.DiscoveryException;
 import com.chaos.exceptions.NetworkException;
 import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.NettyBootstrapInitializer;
+import com.chaosrpc.compress.CompressFactory;
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.enumeration.RequestType;
 import com.chaosrpc.serialize.SerializerFactory;
@@ -79,7 +80,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         // 需要对各种请求id和各种类型做处理
         ChaosrpcRequest chaosrpcRequest = ChaosrpcRequest.builder()
                 .requestId(ChaosrpcBootstrap.ID_GENERATOR.getId())
-                .compressType((byte) 1)
+                .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.COMPRESS_TYPE).getCode())
                 .requestType(RequestType.REQUEST.getId())
                 .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.SERIALIZE_TYPE).getCode())
                 .requestPlayload(requestPlayload)
@@ -109,7 +110,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         // 需要将 completableFuture 暴露出去
         ChaosrpcBootstrap.PENDING_REQUEST.put(1L, completableFuture);
         // 这里 writeAndFlush 写出一个请求，这个请求实例就会进入pipeline执行出站的一系列操作
-        // 我们想象得到，第一个出战程序一定是将 chaosrpcRequest --> 二进制的报文
+        // 我们想象得到，第一个出站程序一定是将 chaosrpcRequest --> 二进制的报文
         channel.writeAndFlush(chaosrpcRequest)
                 .addListener((ChannelFutureListener) promise -> {
                         /*

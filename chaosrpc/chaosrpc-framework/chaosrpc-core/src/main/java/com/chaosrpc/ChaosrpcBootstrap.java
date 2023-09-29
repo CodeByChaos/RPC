@@ -47,6 +47,7 @@ public class ChaosrpcBootstrap {
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
     public static String SERIALIZE_TYPE = "jdk";
+    public static String COMPRESS_TYPE = "gzip";
 
     // 维护一个ZooKeeper实例
 //    private ZooKeeper zooKeeper;
@@ -196,7 +197,15 @@ public class ChaosrpcBootstrap {
     public ChaosrpcBootstrap serialize(String serializeType) {
         SERIALIZE_TYPE = serializeType;
         if(log.isDebugEnabled()) {
-            log.error("配置了序列化的方式为{}", serializeType);
+            log.error("配置了序列化的方式为{}.", serializeType);
+        }
+        return this;
+    }
+
+    public ChaosrpcBootstrap compress(String compressType) {
+        COMPRESS_TYPE = compressType;
+        if(log.isDebugEnabled()) {
+            log.error("配置了压缩的方式为{}.", compressType);
         }
         return this;
     }

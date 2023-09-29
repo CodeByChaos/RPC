@@ -1,14 +1,15 @@
-package com.chaosrpc.serialize;
+package com.chaosrpc.serialize.impl;
 
 import com.alibaba.fastjson2.JSON;
 import com.chaos.exceptions.SerializeException;
+import com.chaosrpc.serialize.Serializer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 @Slf4j
-public class JsonSerializer implements Serializer{
+public class JsonSerializer implements Serializer {
     @Override
     public byte[] serialize(Object object) throws IOException {
         if(object == null) {

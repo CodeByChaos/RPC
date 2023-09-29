@@ -1,14 +1,15 @@
-package com.chaosrpc.serialize;
+package com.chaosrpc.serialize.impl;
 
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.chaos.exceptions.SerializeException;
+import com.chaosrpc.serialize.Serializer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 
 @Slf4j
-public class HessianSerailizer implements Serializer{
+public class HessianSerailizer implements Serializer {
     @Override
     public byte[] serialize(Object object) throws IOException {
         if(object == null) {
