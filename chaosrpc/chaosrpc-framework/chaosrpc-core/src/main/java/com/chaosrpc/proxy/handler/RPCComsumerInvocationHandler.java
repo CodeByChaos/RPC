@@ -51,7 +51,11 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
 //        log.info("args---->{}", args);
         // 1.发现服务，从注册中心，寻找一个可用的服务
         // 传入服务的名字，返回一个ip:port
-        InetSocketAddress address = registry.lookup(interfaceConsumer.getName());
+        // 尝试获取当前配置的负载均衡器，选取一个可用节点
+//        InetSocketAddress address = registry.lookup(interfaceConsumer.getName());
+        InetSocketAddress address = ChaosrpcBootstrap
+                .LOAD_BALANCER
+                .selectServiceAddress(interfaceConsumer.getName());
         if(log.isDebugEnabled()) {
             log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
         }

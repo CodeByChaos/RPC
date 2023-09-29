@@ -3,6 +3,7 @@ package com.chaosrpc.discovery;
 import com.chaosrpc.ServiceConfig;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * 注册中心，应该具有什么样的能力
@@ -16,9 +17,9 @@ public interface Registry {
     void register(ServiceConfig<?> serviceConfig);
 
     /**
-     * 从注册中心拉取一个可用的服务
+     * 从注册中心拉取服务列表
      * @param serviceName 服务的名称
      * @return 服务的ip:port
      */
-    InetSocketAddress lookup(String serviceName);
+    List<InetSocketAddress> lookup(String serviceName);
 }

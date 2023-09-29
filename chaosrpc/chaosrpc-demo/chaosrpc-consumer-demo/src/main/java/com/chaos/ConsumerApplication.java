@@ -24,8 +24,11 @@ public class ConsumerApplication {
                 .reference(reference);
 
         // 获取一个代理对象
-        HelloChaosrpc helloChaosrpc = reference.get();
-        String s = helloChaosrpc.sayHi("你好");
-        System.out.println(s);
+        for (int i = 0; i < 10; i++) {
+            HelloChaosrpc helloChaosrpc = reference.get();
+            String s = helloChaosrpc.sayHi("你好");
+            System.out.println(s);
+        }
+
     }
 }

@@ -6,6 +6,8 @@ import com.chaosrpc.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaosrpc.channelHandler.handler.MethodCallHandler;
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.discovery.RegistryConfig;
+import com.chaosrpc.loadbalance.LoadBalancer;
+import com.chaosrpc.loadbalance.impl.RoundRobinLoadBalancer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -30,12 +32,15 @@ public class ChaosrpcBootstrap {
     private String applicationName;
     private RegistryConfig registryConfig;
     private ProtocolConfig protocolConfig;
-    private int port = 8088;
+    public static final int PORT = 8090;
+    public static String SERIALIZE_TYPE = "jdk";
+    public static String COMPRESS_TYPE = "gzip";
 
     public static final IdGenerator ID_GENERATOR = new IdGenerator(1, 2);
 
     // 注册中心
     private Registry registry;
+    public static LoadBalancer LOAD_BALANCER;
 
     // 连接的缓存，如果使用InetSocketAddress类做key，一定要看有没有重写equals()和toString()。
     public static final Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>();
@@ -46,8 +51,7 @@ public class ChaosrpcBootstrap {
     // 定义全局的对外挂起的 completableFuture
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
-    public static String SERIALIZE_TYPE = "jdk";
-    public static String COMPRESS_TYPE = "gzip";
+
 
     // 维护一个ZooKeeper实例
 //    private ZooKeeper zooKeeper;
@@ -80,6 +84,8 @@ public class ChaosrpcBootstrap {
 
         // 尝试使用 registryConfig 获取一个注册中心，有点工厂设计模式
         this.registry = registryConfig.getRegistry();
+        // todo 需要修改
+        ChaosrpcBootstrap.LOAD_BALANCER = new RoundRobinLoadBalancer();
         return this;
     }
 
@@ -143,7 +149,7 @@ public class ChaosrpcBootstrap {
                     // 通过工厂方法设计模式实例化一个channel
                     .channel(NioServerSocketChannel.class)
                     // 设置监听端口
-                    .localAddress(new InetSocketAddress(port))
+                    .localAddress(new InetSocketAddress(PORT))
                     // ChannelInitializer是一个特殊的处理类，
                     // 他的目的是帮助使用者配置一个新的Channel，
                     // 用于把许多自定义的处理类增加到pipeline上来
@@ -162,7 +168,7 @@ public class ChaosrpcBootstrap {
                     });
 
             // 4.绑定端口
-            ChannelFuture channelFuture = serverBootstrap.bind(port).sync();
+            ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
             System.out.println("在" + channelFuture.channel().localAddress() + "上开启监听");
             // 阻塞操作，closeFuture()开启了一个channel的监听器（这期间channel在进行各项工作），直到链路断开
             // closeFuture().sync()会阻塞当前线程，直到通道关闭操作完成。这可以用于确保在关闭通道之前，程序不会提前退出。
@@ -208,5 +214,9 @@ public class ChaosrpcBootstrap {
             log.error("配置了压缩的方式为{}.", compressType);
         }
         return this;
+    }
+
+    public Registry getRegistry() {
+        return registry;
     }
 }

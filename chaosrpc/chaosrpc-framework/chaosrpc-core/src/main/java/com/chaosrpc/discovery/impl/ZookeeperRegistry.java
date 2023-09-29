@@ -6,6 +6,7 @@ import com.chaos.exceptions.NetworkException;
 import com.chaos.utils.NetUtils;
 import com.chaos.utils.zookeeper.ZookeeperNode;
 import com.chaos.utils.zookeeper.ZookeeperUtils;
+import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.ServiceConfig;
 import com.chaosrpc.discovery.AbstractRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         // ip通常是需要一个局域网ip，不是127.0.0.1，也不是ipv6
         // 192.168.121.121
         // todo: 后续处理端口的问题
-        String temporaryNode = parentNode + "/" + NetUtils.getIpAddress() + ":" + 8088;
+        String temporaryNode = parentNode + "/" + NetUtils.getIpAddress() + ":" + ChaosrpcBootstrap.PORT;
         if(!ZookeeperUtils.exists(zooKeeper, temporaryNode, null)) {
             ZookeeperNode node = new ZookeeperNode(temporaryNode, null);
             ZookeeperUtils.createNode(zooKeeper, node, null,
@@ -58,12 +59,17 @@ public class ZookeeperRegistry extends AbstractRegistry {
         }
 
         if(log.isDebugEnabled()){
-            log.debug("服务{}，已经被注册", service.getInterface().getName());
+            log.debug("服务{}，已经被注册.", service.getInterface().getName());
         }
     }
 
+    /**
+     * 注册中心的核心目的是什么？拉取合适的服务列表
+     * @param serviceName 服务的名称
+     * @return 服务列表
+     */
     @Override
-    public InetSocketAddress lookup(String serviceName) {
+    public List<InetSocketAddress> lookup(String serviceName) {
         // 1.找到服务对应的节点
         String serviceNode = Constant.BASE_PROVIDER_PATH + "/" + serviceName;
 
@@ -74,12 +80,12 @@ public class ZookeeperRegistry extends AbstractRegistry {
             String ip = ipAndPort[0];
             int port = Integer.parseInt(ipAndPort[1]);
             return new InetSocketAddress(ip, port);
-        }).collect(Collectors.toList());
+        }).toList();
         if (inetSocketAddresses.size() == 0) {
-            throw new DiscoveryException("未发现任何可用的服务主机。");
+            throw new DiscoveryException("未发现任何可用的服务主机.");
         }
-        // todo q:我们每次调用相关方法的时候都需要去注册中心拉取服务列表吗？ 本地缓存 + watcher
-        // todo q:我们如何合理选择一个可用的服务，而不是只获取第一个？ 负载均衡策略
-        return inetSocketAddresses.get(0);
+        //  q:我们每次调用相关方法的时候都需要去注册中心拉取服务列表吗？ 本地缓存 + watcher
+        //  q:我们如何合理选择一个可用的服务，而不是只获取第一个？ 负载均衡策略
+        return inetSocketAddresses;
     }
 }

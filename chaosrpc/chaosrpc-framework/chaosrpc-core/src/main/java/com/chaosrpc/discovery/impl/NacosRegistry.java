@@ -12,6 +12,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 
 @Slf4j
 public class NacosRegistry extends AbstractRegistry {
@@ -58,7 +59,7 @@ public class NacosRegistry extends AbstractRegistry {
     }
 
     @Override
-    public InetSocketAddress lookup(String serviceName) {
+    public List<InetSocketAddress> lookup(String serviceName) {
         return null;
     }
 }
