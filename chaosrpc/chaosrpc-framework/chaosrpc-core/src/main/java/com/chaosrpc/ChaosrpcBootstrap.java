@@ -7,7 +7,9 @@ import com.chaosrpc.channelHandler.handler.MethodCallHandler;
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.discovery.RegistryConfig;
 import com.chaosrpc.loadbalance.LoadBalancer;
+import com.chaosrpc.loadbalance.impl.ConsistentHashLoadBalancer;
 import com.chaosrpc.loadbalance.impl.RoundRobinLoadBalancer;
+import com.chaosrpc.transport.message.ChaosrpcRequest;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -32,9 +34,11 @@ public class ChaosrpcBootstrap {
     private String applicationName;
     private RegistryConfig registryConfig;
     private ProtocolConfig protocolConfig;
-    public static final int PORT = 8090;
+    public static final int PORT = 8088;
     public static String SERIALIZE_TYPE = "jdk";
     public static String COMPRESS_TYPE = "gzip";
+
+    public static final ThreadLocal<ChaosrpcRequest> REQUEST_THREAD_LOCAL = new ThreadLocal<>();
 
     public static final IdGenerator ID_GENERATOR = new IdGenerator(1, 2);
 
@@ -85,7 +89,7 @@ public class ChaosrpcBootstrap {
         // 尝试使用 registryConfig 获取一个注册中心，有点工厂设计模式
         this.registry = registryConfig.getRegistry();
         // todo 需要修改
-        ChaosrpcBootstrap.LOAD_BALANCER = new RoundRobinLoadBalancer();
+        ChaosrpcBootstrap.LOAD_BALANCER = new ConsistentHashLoadBalancer();
         return this;
     }
 

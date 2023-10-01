@@ -49,27 +49,6 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         // 我们已经知道method(具体的方法)，args(参数列表)
 //        log.info("methods---->{}", method);
 //        log.info("args---->{}", args);
-        // 1.发现服务，从注册中心，寻找一个可用的服务
-        // 传入服务的名字，返回一个ip:port
-        // 尝试获取当前配置的负载均衡器，选取一个可用节点
-//        InetSocketAddress address = registry.lookup(interfaceConsumer.getName());
-        InetSocketAddress address = ChaosrpcBootstrap
-                .LOAD_BALANCER
-                .selectServiceAddress(interfaceConsumer.getName());
-        if(log.isDebugEnabled()) {
-            log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
-        }
-        // 使用netty连接服务器，发送调用的服务的名字+方法名字+参数列表，得到结果
-        // 定义线程池，EventLoopGroup
-        // q:整个连接过程放在此处是否可行？也就意味着每次调用都会产生一个新的netty连接。如何缓存我们的连接？
-        // 每次在此处建立一个新的连接是不合适的
-        // 解决方案？缓存channel，尝试从缓存中获取channel，如果未获取，则创建新的连接，并进行缓存
-        // 2.尝试从全局缓存中获取一个可用channel
-        Channel channel = getAvailableChannel(address);
-        if(log.isDebugEnabled()) {
-            log.debug("获取了和{}建立的连接通道，准备发送数据", interfaceConsumer.getName());
-        }
-
 
         /*
          * --------------封装报文--------------
@@ -89,6 +68,31 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
                 .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.SERIALIZE_TYPE).getCode())
                 .requestPlayload(requestPlayload)
                 .build();
+
+        // 将请求存入threadLocal，需要在合适的时候调用remove
+        ChaosrpcBootstrap.REQUEST_THREAD_LOCAL.set(chaosrpcRequest);
+
+
+        // 1.发现服务，从注册中心拉取服务列表，并通过客户端负载均衡寻找一个可用的服务
+        // 传入服务的名字，返回一个ip:port
+        // 尝试获取当前配置的负载均衡器，选取一个可用节点
+//        InetSocketAddress address = registry.lookup(interfaceConsumer.getName());
+        InetSocketAddress address = ChaosrpcBootstrap
+                .LOAD_BALANCER
+                .selectServiceAddress(interfaceConsumer.getName());
+        if(log.isDebugEnabled()) {
+            log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
+        }
+        // 使用netty连接服务器，发送调用的服务的名字+方法名字+参数列表，得到结果
+        // 定义线程池，EventLoopGroup
+        // q:整个连接过程放在此处是否可行？也就意味着每次调用都会产生一个新的netty连接。如何缓存我们的连接？
+        // 每次在此处建立一个新的连接是不合适的
+        // 解决方案？缓存channel，尝试从缓存中获取channel，如果未获取，则创建新的连接，并进行缓存
+        // 2.尝试从全局缓存中获取一个可用channel
+        Channel channel = getAvailableChannel(address);
+        if(log.isDebugEnabled()) {
+            log.debug("获取了和{}建立的连接通道，准备发送数据", interfaceConsumer.getName());
+        }
 
 
         /*
@@ -132,6 +136,9 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
                     }
                 });
 //                Object o = completableFuture.get(3, TimeUnit.SECONDS);
+
+        // 清理threadLocal
+        ChaosrpcBootstrap.REQUEST_THREAD_LOCAL.remove();
         // 如果没有地方处理 completableFuture 这里会阻塞，等待complete()的执行
         // q:需要在哪调用complete方法得到结果，很明显 pipeline 中最终的handler的处理结果
         // 获得响应的结果
