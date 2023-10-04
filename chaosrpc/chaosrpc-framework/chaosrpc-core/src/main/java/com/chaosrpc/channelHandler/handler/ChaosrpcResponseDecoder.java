@@ -78,12 +78,16 @@ public class ChaosrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         // 8.请求id
         long requestId = byteBuf.readLong();
 
+        // 9.时间戳
+        long timestamp = byteBuf.readLong();
+
         // 我们需要封装
         ChaosrpcResponse chaosrpcResponse = new ChaosrpcResponse();
         chaosrpcResponse.setRequestId(requestId);
         chaosrpcResponse.setCompressType(compressType);
         chaosrpcResponse.setSerializeType(serializeType);
         chaosrpcResponse.setCode(responseCode);
+        chaosrpcResponse.setTimeStamp(timestamp);
 
         // todo 心跳请求没有负载，此处可以判断并直接返回
 //        if (requestType == RequestType.HEARTBEAT.getId()) {
@@ -93,17 +97,18 @@ public class ChaosrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         int bodyLength = fullLength - headLength;
         byte[] playload = new byte[bodyLength];
         byteBuf.readBytes(playload);
-
-        // 有了字节数组之后就可以解压缩，反序列化
-        // todo 解压
-        Compressor compressor = CompressFactory.getCompress(compressType).getCompressor();
-        playload = compressor.decompress(playload);
-        // 反序列化
-        Serializer serializer = SerializerFactory
-                .getSerializer(chaosrpcResponse.getSerializeType())
-                .getSerializer();
-        Object body = serializer.disSerialize(playload, Object.class);
-        chaosrpcResponse.setBody(body);
+        if(playload.length > 0) {
+            // 有了字节数组之后就可以解压缩，反序列化
+            // 解压
+            Compressor compressor = CompressFactory.getCompress(compressType).getCompressor();
+            playload = compressor.decompress(playload);
+            // 反序列化
+            Serializer serializer = SerializerFactory
+                    .getSerializer(chaosrpcResponse.getSerializeType())
+                    .getSerializer();
+            Object body = serializer.disSerialize(playload, Object.class);
+            chaosrpcResponse.setBody(body);
+        }
         if(log.isDebugEnabled()) {
             log.debug("响应{}已经在调用端完成解码工作.", chaosrpcResponse.getRequestId());
         }

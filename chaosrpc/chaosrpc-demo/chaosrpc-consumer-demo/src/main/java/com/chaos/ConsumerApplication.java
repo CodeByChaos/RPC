@@ -29,6 +29,5 @@ public class ConsumerApplication {
             String s = helloChaosrpc.sayHi("你好");
             System.out.println(s);
         }
-
     }
 }

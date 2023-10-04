@@ -4,11 +4,11 @@ import com.chaos.IdGenerator;
 import com.chaosrpc.channelHandler.handler.ChaosrpcRequestDecoder;
 import com.chaosrpc.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaosrpc.channelHandler.handler.MethodCallHandler;
+import com.chaosrpc.core.HeartBeatDetector;
 import com.chaosrpc.discovery.Registry;
 import com.chaosrpc.discovery.RegistryConfig;
 import com.chaosrpc.loadbalance.LoadBalancer;
-import com.chaosrpc.loadbalance.impl.ConsistentHashLoadBalancer;
-import com.chaosrpc.loadbalance.impl.RoundRobinLoadBalancer;
+import com.chaosrpc.loadbalance.impl.MinResponseTimeLoadBalancer;
 import com.chaosrpc.transport.message.ChaosrpcRequest;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,7 +35,7 @@ public class ChaosrpcBootstrap {
     private String applicationName;
     private RegistryConfig registryConfig;
     private ProtocolConfig protocolConfig;
-    public static final int PORT = 8088;
+    public static final int PORT = 8090;
     public static String SERIALIZE_TYPE = "jdk";
     public static String COMPRESS_TYPE = "gzip";
 
@@ -47,10 +48,12 @@ public class ChaosrpcBootstrap {
     public static LoadBalancer LOAD_BALANCER;
 
     // 连接的缓存，如果使用InetSocketAddress类做key，一定要看有没有重写equals()和toString()。
-    public static final Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>();
+    public static final Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>(16);
+
+    public static final TreeMap<Long, Channel> ANSWER_TIME_CHANNEL_CACHE = new TreeMap<>();
 
     // 维护已经发布且暴露的服务列表 key->interface的全限定名 value->ServiceConfig
-    public static final Map<String, ServiceConfig<?>> SERVICE_LISTS = new ConcurrentHashMap<>();
+    public static final Map<String, ServiceConfig<?>> SERVICE_LISTS = new ConcurrentHashMap<>(16);
 
     // 定义全局的对外挂起的 completableFuture
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
@@ -89,7 +92,7 @@ public class ChaosrpcBootstrap {
         // 尝试使用 registryConfig 获取一个注册中心，有点工厂设计模式
         this.registry = registryConfig.getRegistry();
         // todo 需要修改
-        ChaosrpcBootstrap.LOAD_BALANCER = new ConsistentHashLoadBalancer();
+        ChaosrpcBootstrap.LOAD_BALANCER = new MinResponseTimeLoadBalancer();
         return this;
     }
 
@@ -173,7 +176,6 @@ public class ChaosrpcBootstrap {
 
             // 4.绑定端口
             ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
-            System.out.println("在" + channelFuture.channel().localAddress() + "上开启监听");
             // 阻塞操作，closeFuture()开启了一个channel的监听器（这期间channel在进行各项工作），直到链路断开
             // closeFuture().sync()会阻塞当前线程，直到通道关闭操作完成。这可以用于确保在关闭通道之前，程序不会提前退出。
             channelFuture.channel().closeFuture().sync();
@@ -193,6 +195,8 @@ public class ChaosrpcBootstrap {
      *  ----- 服务调用方相关的api -----
      */
     public ChaosrpcBootstrap reference(ReferenceConfig<?> reference){
+        // 开启对这个服务的心跳检测
+        HeartBeatDetector.detectHeartBeat(reference.getInterface().getName());
         // 在这个方法里我们是否可以拿到相关的配置项--注册中心
         // 配置reference，将来调用get方法时，方便生成代理对象
         // 1.reference需要一个注册中心

@@ -46,6 +46,7 @@ public class ChaosrpcRequestEncoder extends MessageToByteEncoder<ChaosrpcRequest
         byteBuf.writeByte(chaosrpcRequest.getRequestType());
         // 请求id
         byteBuf.writeLong(chaosrpcRequest.getRequestId());
+        byteBuf.writeLong(chaosrpcRequest.getTimeStamp());
 //        // 针对不同的消息类型需要做不同的处理，心跳的请求，没有playload
 //        if(chaosrpcRequest.getRequestType() == RequestType.HEARTBEAT.getId()) {
 //            // 处理一下总长度，总长度 = header长度
@@ -59,15 +60,20 @@ public class ChaosrpcRequestEncoder extends MessageToByteEncoder<ChaosrpcRequest
         // 写入请求体（requestPlayload）
         // 1.根据配置的序列化方式进行序列化
         // 怎么实现序列化 1.工具类 耦合性高 很难替换序列化方式
-        Serializer serializer = SerializerFactory
-                .getSerializer(chaosrpcRequest.getSerializeType())
-                .getSerializer();
-        byte[] body = serializer.serialize(chaosrpcRequest.getRequestPlayload());
-        // 2.根据配置的压缩方式进行压缩
-        Compressor compressor = CompressFactory
-                .getCompress(chaosrpcRequest.getCompressType())
-                .getCompressor();
-        body = compressor.compress(body);
+        byte[] body = null;
+        if(chaosrpcRequest.getRequestPlayload() != null ){
+            Serializer serializer = SerializerFactory
+                    .getSerializer(chaosrpcRequest.getSerializeType())
+                    .getSerializer();
+            body = serializer.serialize(chaosrpcRequest.getRequestPlayload());
+            // 2.根据配置的压缩方式进行压缩
+            Compressor compressor = CompressFactory
+                    .getCompress(chaosrpcRequest.getCompressType())
+                    .getCompressor();
+            body = compressor.compress(body);
+
+        }
+
         if(body != null) {
             // 重新处理报文总长度
             byteBuf.writeBytes(body);

@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +67,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
                 .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.COMPRESS_TYPE).getCode())
                 .requestType(RequestType.REQUEST.getId())
                 .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.SERIALIZE_TYPE).getCode())
+                .timeStamp(System.currentTimeMillis())
                 .requestPlayload(requestPlayload)
                 .build();
 
@@ -116,7 +118,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         // 4.写出报文
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         // 需要将 completableFuture 暴露出去
-        ChaosrpcBootstrap.PENDING_REQUEST.put(1L, completableFuture);
+        ChaosrpcBootstrap.PENDING_REQUEST.put(chaosrpcRequest.getRequestId(), completableFuture);
         // 这里 writeAndFlush 写出一个请求，这个请求实例就会进入pipeline执行出站的一系列操作
         // 我们想象得到，第一个出站程序一定是将 chaosrpcRequest --> 二进制的报文
         channel.writeAndFlush(chaosrpcRequest)

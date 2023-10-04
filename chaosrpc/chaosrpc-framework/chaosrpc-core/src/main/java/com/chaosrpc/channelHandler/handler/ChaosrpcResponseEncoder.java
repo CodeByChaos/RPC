@@ -32,6 +32,7 @@ public class ChaosrpcResponseEncoder extends MessageToByteEncoder<ChaosrpcRespon
         byteBuf.writeByte(chaosrpcResponse.getCode());
         // 请求id
         byteBuf.writeLong(chaosrpcResponse.getRequestId());
+        byteBuf.writeLong(chaosrpcResponse.getTimeStamp());
 //        // 针对不同的消息类型需要做不同的处理，心跳的请求，没有playload "ping" "pong"
 //        if(chaosrpcRequest.getRequestType() == RequestType.HEARTBEAT.getId()) {
 //            // 处理一下总长度，总长度 = header长度
@@ -44,15 +45,19 @@ public class ChaosrpcResponseEncoder extends MessageToByteEncoder<ChaosrpcRespon
 //        }
         // 写入请求体（requestPlayload）
         // 对响应做序列化
-        Serializer serializer = SerializerFactory
-                .getSerializer(chaosrpcResponse.getSerializeType())
-                .getSerializer();
-        byte[] body = serializer.serialize(chaosrpcResponse.getBody());
+        byte[] body = null;
+        if(chaosrpcResponse.getBody() != null) {
+            Serializer serializer = SerializerFactory
+                    .getSerializer(chaosrpcResponse.getSerializeType())
+                    .getSerializer();
+            body = serializer.serialize(chaosrpcResponse.getBody());
+            // 压缩
+            Compressor compressor = CompressFactory
+                    .getCompress(chaosrpcResponse.getCompressType())
+                    .getCompressor();
+            body = compressor.compress(body);
 
-        // 压缩
-        Compressor compressor = CompressFactory.getCompress(chaosrpcResponse.getCompressType()).getCompressor();
-        body = compressor.compress(body);
-
+        }
         if(body != null) {
             // 重新处理报文总长度
             byteBuf.writeBytes(body);

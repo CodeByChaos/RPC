@@ -13,6 +13,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Random;
+
 /**
  * 基于长度字段的帧解码器
  */
@@ -41,6 +43,8 @@ public class ChaosrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
+
+        Thread.sleep(new Random().nextInt(50));
         Object decode = super.decode(ctx, in);
         if(decode instanceof ByteBuf byteBuf) {
             return decodeFrame(byteBuf);
@@ -83,12 +87,16 @@ public class ChaosrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
         // 8.请求id
         long requestId = byteBuf.readLong();
 
+        // 9.时间戳
+        long timestamp = byteBuf.readLong();
+
         // 我们需要封装
         ChaosrpcRequest chaosrpcRequest = new ChaosrpcRequest();
         chaosrpcRequest.setRequestId(requestId);
         chaosrpcRequest.setCompressType(compressType);
         chaosrpcRequest.setSerializeType(serializeType);
         chaosrpcRequest.setRequestType(requestType);
+        chaosrpcRequest.setTimeStamp(timestamp);
 
         // 心跳请求没有负载，此处可以判断并直接返回
         if (requestType == RequestType.HEARTBEAT.getId()) {
@@ -100,14 +108,16 @@ public class ChaosrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
         byteBuf.readBytes(playload);
 
         // 有了字节数组之后就可以解压缩，反序列化
-        // todo 解压
-        Compressor compressor = CompressFactory.getCompress(compressType).getCompressor();
-        playload = compressor.decompress(playload);
-        // 反序列化
-        // 1--->jdk
-        Serializer serializer = SerializerFactory.getSerializer(serializeType).getSerializer();
-        RequestPlayload requestPlayload = serializer.disSerialize(playload, RequestPlayload.class);
-        chaosrpcRequest.setRequestPlayload(requestPlayload);
+        // 解压
+        if(playload.length != 0) {
+            Compressor compressor = CompressFactory.getCompress(compressType).getCompressor();
+            playload = compressor.decompress(playload);
+            // 反序列化
+            // 1--->jdk
+            Serializer serializer = SerializerFactory.getSerializer(serializeType).getSerializer();
+            RequestPlayload requestPlayload = serializer.disSerialize(playload, RequestPlayload.class);
+            chaosrpcRequest.setRequestPlayload(requestPlayload);
+        }
         if(log.isDebugEnabled()) {
             log.debug("请求{}已经在服务端完成解码工作.", chaosrpcRequest.getRequestId());
         }

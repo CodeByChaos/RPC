@@ -20,8 +20,12 @@ public class MySimpleChannelInboundHandler extends SimpleChannelInboundHandler<C
                                 ChaosrpcResponse chaosrpcResponse) throws Exception {
         // 服务提供方，给予的结果
         Object returnValue = chaosrpcResponse.getBody();
+        // todo 需要针对code做处理
+        returnValue = returnValue == null ? new Object() : returnValue;
         // 从全局挂起中的请求中寻找与之匹配的待处理 completableFuture
-        CompletableFuture<Object> completableFuture = ChaosrpcBootstrap.PENDING_REQUEST.get(1L);
+        CompletableFuture<Object> completableFuture = ChaosrpcBootstrap
+                .PENDING_REQUEST
+                .get(chaosrpcResponse.getRequestId());
         completableFuture.complete(returnValue);
         if(log.isDebugEnabled()) {
             log.debug("已经寻找到编号为{}的completableFuture，处理响应结果.", chaosrpcResponse.getRequestId());

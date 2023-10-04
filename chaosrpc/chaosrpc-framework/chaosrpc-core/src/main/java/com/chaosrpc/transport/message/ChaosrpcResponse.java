@@ -25,6 +25,8 @@ public class ChaosrpcResponse {
     // 1.成功 2.异常
     private byte code;
 
+    private long timeStamp;
+
     // 具体的消息体
     private Object body;
 }
