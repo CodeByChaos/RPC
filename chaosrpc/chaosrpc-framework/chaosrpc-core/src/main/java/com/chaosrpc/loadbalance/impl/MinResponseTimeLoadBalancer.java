@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 最短响应时间的负载均衡策略
  * @author Chaos Wong
  */
 @Slf4j
@@ -30,6 +31,9 @@ public class MinResponseTimeLoadBalancer extends AbstractLoadBalancer {
         public InetSocketAddress getNext() {
             Map.Entry<Long, Channel> entry = ChaosrpcBootstrap.ANSWER_TIME_CHANNEL_CACHE.firstEntry();
             if (entry != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("选取了响应时间为{}ms的服务节点", entry.getKey());
+                }
                 return (InetSocketAddress) entry.getValue().remoteAddress();
             }
             // 直接从缓存中获取一个可用的

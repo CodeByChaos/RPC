@@ -9,10 +9,9 @@ import com.chaos.utils.zookeeper.ZookeeperUtils;
 import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.ServiceConfig;
 import com.chaosrpc.discovery.AbstractRegistry;
+import com.chaosrpc.watcher.UpAndDownWatcher;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -74,7 +73,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         String serviceNode = Constant.BASE_PROVIDER_PATH + "/" + serviceName;
 
         // 2.从zookeeper中获取他的子节点 192.168.12.123:2151
-        List<String> children = ZookeeperUtils.getChildren(zooKeeper, serviceNode, null);
+        List<String> children = ZookeeperUtils.getChildren(zooKeeper, serviceNode, new UpAndDownWatcher());
         List<InetSocketAddress> inetSocketAddresses = children.stream().map(ipString -> {
             String[] ipAndPort = ipString.split(":");
             String ip = ipAndPort[0];
