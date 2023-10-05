@@ -20,8 +20,9 @@ public class ProviderApplication {
                 // 配置注册中心
                 .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
                 .protocol(new ProtocolConfig("jdk"))
-                // 发布服务
-                .publish(service)
+//                // 发布服务
+//                .publish(service)
+                .scan("com.chaos")
                 // 启动服务
                 .start();
     }

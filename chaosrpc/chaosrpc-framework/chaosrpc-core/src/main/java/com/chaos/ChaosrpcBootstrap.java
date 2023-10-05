@@ -1,5 +1,6 @@
 package com.chaos;
 
+import com.chaos.annotation.ChaosApi;
 import com.chaos.channelHandler.handler.ChaosrpcRequestDecoder;
 import com.chaos.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaos.channelHandler.handler.MethodCallHandler;
@@ -18,6 +19,7 @@ import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ChaosrpcBootstrap {
@@ -233,11 +236,36 @@ public class ChaosrpcBootstrap {
     public ChaosrpcBootstrap scan(String packageName) {
         // 1.需要通过packageName获取其下的所有的类的权限定名称
         List<String> classNames = getAllClassNames(packageName);
-        System.out.println(1);
-        // 2.通过反射获取他的接口，构建具体实现
-
-        // 3.进行发布
-
+        // 2.通过反射获取接口，构建具体实现
+        List<Class<?>> classes = classNames.stream().map(className -> {
+                    try {
+                        return Class.forName(className);
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).filter(clazz -> clazz.getAnnotation(ChaosApi.class) != null)
+                .collect(Collectors.toList());
+        for (Class<?> clazz : classes) {
+            // 获取接口
+            Class<?>[] interfaces = clazz.getInterfaces();
+            Object instance = null;
+            try {
+                instance = clazz.getConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+            for (Class<?> anInterface : interfaces) {
+                ServiceConfig<?> serviceConfig = new ServiceConfig<>();
+                serviceConfig.setInterface(anInterface);
+                serviceConfig.setRef(instance);
+                if(log.isDebugEnabled()) {
+                    log.debug("---->已经通过包扫描，将服务{}发布.", anInterface);
+                }
+                // 3.发布
+                publish(serviceConfig);
+            }
+        }
         return this;
     }
 
@@ -290,8 +318,4 @@ public class ChaosrpcBootstrap {
         return fileName;
     }
 
-    public static void main(String[] args) {
-        List<String> allClassNames = ChaosrpcBootstrap.getInstance().getAllClassNames("com.chaos");
-        System.out.println(allClassNames);
-    }
 }
