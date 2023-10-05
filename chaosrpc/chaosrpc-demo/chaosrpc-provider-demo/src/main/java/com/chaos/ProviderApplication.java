@@ -1,10 +1,7 @@
 package com.chaos;
 
 import com.chaos.impl.HelloChaosrpcImpl;
-import com.chaosrpc.ChaosrpcBootstrap;
-import com.chaosrpc.ProtocolConfig;
-import com.chaosrpc.discovery.RegistryConfig;
-import com.chaosrpc.ServiceConfig;
+import com.chaos.discovery.RegistryConfig;
 
 public class ProviderApplication {
     public static void main(String[] args) {

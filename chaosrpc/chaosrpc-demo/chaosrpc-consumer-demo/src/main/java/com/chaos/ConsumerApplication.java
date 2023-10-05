@@ -1,8 +1,6 @@
 package com.chaos;
 
-import com.chaosrpc.ChaosrpcBootstrap;
-import com.chaosrpc.ReferenceConfig;
-import com.chaosrpc.discovery.RegistryConfig;
+import com.chaos.discovery.RegistryConfig;
 
 public class ConsumerApplication {
     public static void main(String[] args) {
@@ -21,6 +19,7 @@ public class ConsumerApplication {
                 .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
                 .serialize("hessian")
                 .compress("gzip")
+                .scan("com.chaos")
                 .reference(reference);
 
         // 获取一个代理对象
