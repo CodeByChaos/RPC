@@ -3,6 +3,7 @@ package com.chaosrpc.watcher;
 import com.chaosrpc.ChaosrpcBootstrap;
 import com.chaosrpc.NettyBootstrapInitializer;
 import com.chaosrpc.discovery.Registry;
+import com.chaosrpc.loadbalance.LoadBalancer;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.WatchedEvent;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class UpAndDownWatcher implements Watcher {
     @Override
     public void process(WatchedEvent watchedEvent) {
+        // 当前的节点是否发生了变化
         if (watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
             if(log.isDebugEnabled()) {
                 log.debug("检测到服务{}有节点上/下线，将重新拉取服务列表.", watchedEvent.getPath());
@@ -45,12 +47,17 @@ public class UpAndDownWatcher implements Watcher {
                     ChaosrpcBootstrap.CHANNEL_CACHE.put(address, channel);
                 }
             }
+
             // 处理下线的节点 下线的节点 可能在CHANNEL_CACHE 不在address
             for(Map.Entry<InetSocketAddress, Channel> entry : ChaosrpcBootstrap.CHANNEL_CACHE.entrySet()) {
                 if(!addresses.contains(entry.getKey())) {
                     ChaosrpcBootstrap.CHANNEL_CACHE.remove(entry.getKey());
                 }
             }
+
+            // 获得负载均衡器，进行重新的loadBalance
+            LoadBalancer loadBalancer = ChaosrpcBootstrap.LOAD_BALANCER;
+            loadBalancer.reLoadBalance(serviceName, addresses);
         }
     }
 

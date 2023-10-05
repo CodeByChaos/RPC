@@ -62,11 +62,6 @@ public class ConsistentHashLoadBalancer extends AbstractLoadBalancer {
             return circle.get(hash);
         }
 
-        @Override
-        public void reBalance() {
-
-        }
-
         /**
          * 将每个节点挂载到hash环上
          * @param address 节点的地址

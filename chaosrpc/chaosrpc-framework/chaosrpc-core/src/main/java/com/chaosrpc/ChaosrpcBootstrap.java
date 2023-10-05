@@ -35,7 +35,7 @@ public class ChaosrpcBootstrap {
     private String applicationName;
     private RegistryConfig registryConfig;
     private ProtocolConfig protocolConfig;
-    public static final int PORT = 8090;
+    public static final int PORT = 8091;
     public static String SERIALIZE_TYPE = "jdk";
     public static String COMPRESS_TYPE = "gzip";
 

@@ -1,14 +1,11 @@
 package com.chaosrpc.loadbalance;
 
-import com.chaos.exceptions.LoadBalanceException;
 import com.chaosrpc.ChaosrpcBootstrap;
-import com.chaosrpc.discovery.Registry;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractLoadBalancer implements LoadBalancer{
 
@@ -36,6 +33,12 @@ public abstract class AbstractLoadBalancer implements LoadBalancer{
 
         // 3.获取可用节点
         return selector.getNext();
+    }
+
+    @Override
+    public synchronized void reLoadBalance(String serviceName, List<InetSocketAddress> addresses) {
+        // 我们可以根据新的服务列表生成新的selector
+        cache.put(serviceName, getSelector(addresses));
     }
 
     /**
