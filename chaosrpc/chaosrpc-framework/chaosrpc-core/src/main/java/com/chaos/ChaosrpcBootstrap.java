@@ -5,10 +5,8 @@ import com.chaos.channelHandler.handler.ChaosrpcRequestDecoder;
 import com.chaos.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaos.channelHandler.handler.MethodCallHandler;
 import com.chaos.core.HeartBeatDetector;
-import com.chaos.discovery.Registry;
 import com.chaos.discovery.RegistryConfig;
 import com.chaos.loadbalance.LoadBalancer;
-import com.chaos.loadbalance.impl.MinResponseTimeLoadBalancer;
 import com.chaos.transport.message.ChaosrpcRequest;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -36,21 +34,11 @@ public class ChaosrpcBootstrap {
     // ChaosrpcBootstrap 是个单例，我们希望每个应用程序只有一个实例
     private static final ChaosrpcBootstrap bootstrap = new ChaosrpcBootstrap();
 
-    // 定义一些相关的基础配置
-    private String applicationName;
-    private RegistryConfig registryConfig;
-    private ProtocolConfig protocolConfig;
-    public static final int PORT = 8091;
-    public static String SERIALIZE_TYPE = "jdk";
-    public static String COMPRESS_TYPE = "gzip";
+    // 全局的配置中心
+    private Configuration configuration;
 
+    // 保存request对象，可以到当前线程中随时获取
     public static final ThreadLocal<ChaosrpcRequest> REQUEST_THREAD_LOCAL = new ThreadLocal<>();
-
-    public static final IdGenerator ID_GENERATOR = new IdGenerator(1, 2);
-
-    // 注册中心
-    private Registry registry;
-    public static LoadBalancer LOAD_BALANCER;
 
     // 连接的缓存，如果使用InetSocketAddress类做key，一定要看有没有重写equals()和toString()。
     public static final Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>(16);
@@ -63,14 +51,12 @@ public class ChaosrpcBootstrap {
     // 定义全局的对外挂起的 completableFuture
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
-
-
     // 维护一个ZooKeeper实例
 //    private ZooKeeper zooKeeper;
 
     private ChaosrpcBootstrap() {
         // 构造启动引导程序时需要做一些什么初始化的事
-
+        configuration = new Configuration();
     }
 
     public static ChaosrpcBootstrap getInstance() {
@@ -83,7 +69,7 @@ public class ChaosrpcBootstrap {
      * @return this 当前实例
      */
     public ChaosrpcBootstrap application(String applicationName) {
-        this.applicationName = applicationName;
+        configuration.setApplicationName(applicationName);
         return this;
     }
 
@@ -93,11 +79,18 @@ public class ChaosrpcBootstrap {
      * @return this 当前实例
      */
     public ChaosrpcBootstrap registry(RegistryConfig registryConfig) {
-
         // 尝试使用 registryConfig 获取一个注册中心，有点工厂设计模式
-        this.registry = registryConfig.getRegistry();
-        // todo 需要修改
-        ChaosrpcBootstrap.LOAD_BALANCER = new MinResponseTimeLoadBalancer();
+        configuration.setRegistryConfig(registryConfig);
+        return this;
+    }
+
+    /**
+     * 用来配置负载均衡策略
+     * @param loadBalancer 负载均衡策略
+     * @return this 当前实例
+     */
+    public ChaosrpcBootstrap loadBalancer(LoadBalancer loadBalancer) {
+        configuration.setLoadBalancer(loadBalancer);
         return this;
     }
 
@@ -107,7 +100,7 @@ public class ChaosrpcBootstrap {
      * @return null
      */
     public ChaosrpcBootstrap protocol(ProtocolConfig protocolConfig) {
-        this.protocolConfig = protocolConfig;
+        configuration.setProtocolConfig(protocolConfig);
         if(log.isDebugEnabled()){
             log.debug("当前工程使用了：{}协议进行序列化", protocolConfig.toString());
         }
@@ -125,7 +118,7 @@ public class ChaosrpcBootstrap {
      */
     public ChaosrpcBootstrap publish(ServiceConfig<?> service) {
         // 我们抽象了注册中心的概念，使用注册中心的一个实现完成注册
-        registry.register(service);
+        configuration.getRegistryConfig().getRegistry().register(service);
 
         // 1.当服务调用方，通过接口、方法名、具体的方法参数列表发起调用，提供怎么知道使用哪一个实现
         //  (1)new 一个   (2)spring beanFactory.getBean(Class)    (3)自己维护映射关系
@@ -161,7 +154,7 @@ public class ChaosrpcBootstrap {
                     // 通过工厂方法设计模式实例化一个channel
                     .channel(NioServerSocketChannel.class)
                     // 设置监听端口
-                    .localAddress(new InetSocketAddress(PORT))
+                    .localAddress(new InetSocketAddress(configuration.getPort()))
                     // ChannelInitializer是一个特殊的处理类，
                     // 他的目的是帮助使用者配置一个新的Channel，
                     // 用于把许多自定义的处理类增加到pipeline上来
@@ -180,7 +173,7 @@ public class ChaosrpcBootstrap {
                     });
 
             // 4.绑定端口
-            ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
+            ChannelFuture channelFuture = serverBootstrap.bind(configuration.getPort()).sync();
             // 阻塞操作，closeFuture()开启了一个channel的监听器（这期间channel在进行各项工作），直到链路断开
             // closeFuture().sync()会阻塞当前线程，直到通道关闭操作完成。这可以用于确保在关闭通道之前，程序不会提前退出。
             channelFuture.channel().closeFuture().sync();
@@ -205,7 +198,7 @@ public class ChaosrpcBootstrap {
         // 在这个方法里我们是否可以拿到相关的配置项--注册中心
         // 配置reference，将来调用get方法时，方便生成代理对象
         // 1.reference需要一个注册中心
-        reference.setRegistry(registry);
+        reference.setRegistry(configuration.registryConfig.getRegistry());
         return this;
     }
 
@@ -214,7 +207,7 @@ public class ChaosrpcBootstrap {
      * @param serializeType 序列化的方式
      */
     public ChaosrpcBootstrap serialize(String serializeType) {
-        SERIALIZE_TYPE = serializeType;
+        configuration.setSerializeType(serializeType);
         if(log.isDebugEnabled()) {
             log.error("配置了序列化的方式为{}.", serializeType);
         }
@@ -222,15 +215,11 @@ public class ChaosrpcBootstrap {
     }
 
     public ChaosrpcBootstrap compress(String compressType) {
-        COMPRESS_TYPE = compressType;
+        configuration.setCompressType(compressType);
         if(log.isDebugEnabled()) {
             log.error("配置了压缩的方式为{}.", compressType);
         }
         return this;
-    }
-
-    public Registry getRegistry() {
-        return registry;
     }
 
     public ChaosrpcBootstrap scan(String packageName) {
@@ -318,4 +307,7 @@ public class ChaosrpcBootstrap {
         return fileName;
     }
 
+    public Configuration getConfiguration() {
+        return configuration;
+    }
 }

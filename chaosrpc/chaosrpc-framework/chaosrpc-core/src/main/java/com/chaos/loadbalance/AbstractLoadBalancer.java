@@ -22,6 +22,8 @@ public abstract class AbstractLoadBalancer implements LoadBalancer{
             // 对于这个负载均衡器，内部应该维护服务列表作为缓存
             List<InetSocketAddress> serviceList = ChaosrpcBootstrap
                     .getInstance()
+                    .getConfiguration()
+                    .getRegistryConfig()
                     .getRegistry()
                     .lookup(serviceName);
             // 提供一些算法负责选取合适的节点

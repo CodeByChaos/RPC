@@ -27,7 +27,7 @@ public class HeartBeatDetector {
 
     public static void detectHeartBeat(String serviceName) {
         // 1.从注册中心拉取服务列表并建立连接
-        Registry registry = ChaosrpcBootstrap.getInstance().getRegistry();
+        Registry registry = ChaosrpcBootstrap.getInstance().getConfiguration().getRegistryConfig().getRegistry();
         List<InetSocketAddress> addresses = registry.lookup(serviceName);
 
         // 2.将连接进行缓存
@@ -69,10 +69,10 @@ public class HeartBeatDetector {
                     long start = System.currentTimeMillis();
                     // 构建一个心跳请求
                     ChaosrpcRequest chaosrpcRequest = ChaosrpcRequest.builder()
-                            .requestId(ChaosrpcBootstrap.ID_GENERATOR.getId())
-                            .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.COMPRESS_TYPE).getCode())
+                            .requestId(ChaosrpcBootstrap.getInstance().getConfiguration().getIdGenerator().getId())
+                            .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.getInstance().getConfiguration().getCompressType()).getCode())
                             .requestType(RequestType.HEARTBEAT.getId())
-                            .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.SERIALIZE_TYPE).getCode())
+                            .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.getInstance().getConfiguration().getSerializeType()).getCode())
                             .timeStamp(start)
                             .build();
 

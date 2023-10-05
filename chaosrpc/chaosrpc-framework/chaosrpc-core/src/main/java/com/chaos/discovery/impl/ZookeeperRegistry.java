@@ -47,7 +47,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         // ip通常是需要一个局域网ip，不是127.0.0.1，也不是ipv6
         // 192.168.121.121
         // todo: 后续处理端口的问题
-        String temporaryNode = parentNode + "/" + NetUtils.getIpAddress() + ":" + ChaosrpcBootstrap.PORT;
+        String temporaryNode = parentNode + "/" + NetUtils.getIpAddress() + ":" + ChaosrpcBootstrap.getInstance().getConfiguration().getPort();
         if(!ZookeeperUtils.exists(zooKeeper, temporaryNode, null)) {
             ZookeeperNode node = new ZookeeperNode(temporaryNode, null);
             ZookeeperUtils.createNode(zooKeeper, node, null,

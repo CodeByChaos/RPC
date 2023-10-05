@@ -61,10 +61,10 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
                 .build();
         // 需要对各种请求id和各种类型做处理
         ChaosrpcRequest chaosrpcRequest = ChaosrpcRequest.builder()
-                .requestId(ChaosrpcBootstrap.ID_GENERATOR.getId())
-                .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.COMPRESS_TYPE).getCode())
+                .requestId(ChaosrpcBootstrap.getInstance().getConfiguration().getIdGenerator().getId())
+                .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.getInstance().getConfiguration().getCompressType()).getCode())
                 .requestType(RequestType.REQUEST.getId())
-                .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.SERIALIZE_TYPE).getCode())
+                .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.getInstance().getConfiguration().getSerializeType()).getCode())
                 .timeStamp(System.currentTimeMillis())
                 .requestPlayload(requestPlayload)
                 .build();
@@ -78,7 +78,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         // 尝试获取当前配置的负载均衡器，选取一个可用节点
 //        InetSocketAddress address = registry.lookup(interfaceConsumer.getName());
         InetSocketAddress address = ChaosrpcBootstrap
-                .LOAD_BALANCER
+                .getInstance().getConfiguration().getLoadBalancer()
                 .selectServiceAddress(interfaceConsumer.getName());
         if(log.isDebugEnabled()) {
             log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
