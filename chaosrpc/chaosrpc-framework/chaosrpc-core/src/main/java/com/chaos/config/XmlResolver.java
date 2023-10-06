@@ -1,13 +1,12 @@
-package com.chaos;
+package com.chaos.config;
 
+
+import com.chaos.IdGenerator;
+import com.chaos.ProtocolConfig;
 import com.chaos.compress.Compressor;
-import com.chaos.compress.impl.GZIPCompressor;
 import com.chaos.discovery.RegistryConfig;
 import com.chaos.loadbalance.LoadBalancer;
-import com.chaos.loadbalance.impl.RoundRobinLoadBalancer;
 import com.chaos.serialize.Serializer;
-import com.chaos.serialize.impl.JdkSerializer;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -23,50 +22,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 
 /**
- * 全局的配置类，代码配置 ----> xml配置 ----> 默认项
  * @author Chaos Wong
  */
-@Data
 @Slf4j
-public class Configuration {
-
-    // 配置信息 ----> 端口号
-    private int port = 8088;
-
-    // 配置信息 ----> 应用程序名字
-    private String applicationName = "default";
-
-    // 配置信息 ----> 注册中心
-    private RegistryConfig registryConfig = new RegistryConfig("zookeeper://127.0.0.1:2181");
-
-    // 配置信息 ----> 序列化协议
-    private ProtocolConfig protocolConfig = new ProtocolConfig("jdk");
-
-    // 配置信息 ----> 序列化使用的协议
-    private String serializeType = "jdk";
-    private Serializer serializer = new JdkSerializer();
-
-    // 配置信息 ----> 压缩使用的协议
-    private String compressType = "gzip";
-    private Compressor compressor = new GZIPCompressor();
-
-    // 配置信息 ----> Id生成器
-    private IdGenerator idGenerator = new IdGenerator(1, 2);
-
-    // 配置信息 ----> 负载均衡策略
-    private LoadBalancer loadBalancer = new RoundRobinLoadBalancer();
-
-    // 读xml，dom4j
-    public Configuration() {
-        // 读取xml获取上边的信息
-        loadFromXml(this);
-    }
-
+public class XmlResolver {
     /**
-     * 从配置文件中读取配置信息 我们不使用dom4j
+     * 从配置文件中读取配置信息 我们不使用dom4j 使用原生spi
      * @param configuration 配置实例
      */
-    private void loadFromXml(Configuration configuration) {
+    public void loadFromXml(Configuration configuration) {
         try {
             // 1.创建一个document
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -90,7 +54,7 @@ public class Configuration {
             configuration.setCompressType(resolveCompressType(doc, xpath));
 //            configuration.setCompressor(resolveCompressor(doc, xpath));
             configuration.setSerializeType(resolveSerializeType(doc, xpath));
-            configuration.setProtocolConfig(new ProtocolConfig(this.serializeType));
+            configuration.setProtocolConfig(new ProtocolConfig(configuration.getSerializeType()));
 //            configuration.setSerializer(resolveSerializer(doc, xpath));
             configuration.setLoadBalancer(resolveLoadBalancer(doc, xpath));
         }  catch (SAXException | ParserConfigurationException | IOException e) {
@@ -207,7 +171,7 @@ public class Configuration {
      */
     private int resolvePort(Document doc, XPath xpath) {
         String expression = "/configuration/port";
-       return Integer.parseInt(Objects.requireNonNull(parseString(doc, xpath, expression)));
+        return Integer.parseInt(Objects.requireNonNull(parseString(doc, xpath, expression)));
     }
 
     /**

@@ -4,6 +4,7 @@ import com.chaos.annotation.ChaosApi;
 import com.chaos.channelHandler.handler.ChaosrpcRequestDecoder;
 import com.chaos.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaos.channelHandler.handler.MethodCallHandler;
+import com.chaos.config.Configuration;
 import com.chaos.core.HeartBeatDetector;
 import com.chaos.discovery.RegistryConfig;
 import com.chaos.loadbalance.LoadBalancer;

@@ -1,0 +1,3 @@
+com.chaos.loadbalance.impl.ConsistentHashLoadBalancer
+com.chaos.loadbalance.impl.MinResponseTimeLoadBalancer
+com.chaos.loadbalance.impl.RoundRobinLoadBalancer
