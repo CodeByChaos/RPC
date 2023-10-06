@@ -1,6 +1,6 @@
 package com.chaos.serialize;
 
-import com.chaos.serialize.impl.HessianSerailizer;
+import com.chaos.serialize.impl.HessianSerializer;
 import com.chaos.serialize.impl.JdkSerializer;
 import com.chaos.serialize.impl.JsonSerializer;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ public class SerializerFactory {
     static {
         SerializeWrapper jdk = new SerializeWrapper((byte) 1, "jdk", new JdkSerializer());
         SerializeWrapper json = new SerializeWrapper((byte) 2, "json", new JsonSerializer());
-        SerializeWrapper hessian = new SerializeWrapper((byte) 3, "hessian", new HessianSerailizer());
+        SerializeWrapper hessian = new SerializeWrapper((byte) 3, "hessian", new HessianSerializer());
         SERIALIZER_CACHE.put("jdk", jdk);
         SERIALIZER_CACHE.put("json", json);
         SERIALIZER_CACHE.put("hessian", hessian);

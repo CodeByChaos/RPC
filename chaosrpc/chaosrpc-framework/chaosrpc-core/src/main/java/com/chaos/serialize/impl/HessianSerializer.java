@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 
 @Slf4j
-public class HessianSerailizer implements Serializer {
+public class HessianSerializer implements Serializer {
     @Override
     public byte[] serialize(Object object) throws IOException {
         if(object == null) {

@@ -198,7 +198,7 @@ public class ChaosrpcBootstrap {
         // 在这个方法里我们是否可以拿到相关的配置项--注册中心
         // 配置reference，将来调用get方法时，方便生成代理对象
         // 1.reference需要一个注册中心
-        reference.setRegistry(configuration.registryConfig.getRegistry());
+        reference.setRegistry(configuration.getRegistryConfig().getRegistry());
         return this;
     }
 
@@ -222,6 +222,11 @@ public class ChaosrpcBootstrap {
         return this;
     }
 
+    /**
+     * 扫描包进行批量注册
+     * @param packageName 包名
+     * @return this
+     */
     public ChaosrpcBootstrap scan(String packageName) {
         // 1.需要通过packageName获取其下的所有的类的权限定名称
         List<String> classNames = getAllClassNames(packageName);

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE configuration SYSTEM "chaos-config.dtd">
+<configuration>
+    <port>8090</port>
+    <applicationName>chaos-rpc-app</applicationName>
+    <!-- 二选一 -->
+    <compressType type="gzip"/>
+<!--    <compressor class="com.chaos.compress.impl.GZIPCompressor"/>-->
+    <serializeType type="hessian"/>
+<!--    <serializer class="com.chaos.serialize.impl.HessianSerializer" />-->
+
+    <registry url="zookeeper://127.0.0.1:2181"/>
+    <loadBalancer class="com.chaos.loadbalance.impl.MinResponseTimeLoadBalancer"/>
+    <idGenerator class="com.chaos.IdGenerator" dataCenterId="2" machineId="4"/>
+</configuration>
