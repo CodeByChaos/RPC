@@ -96,19 +96,6 @@ public class ChaosrpcBootstrap {
     }
 
     /**
-     * 配置当前暴露的服务使用协议
-     * @param protocolConfig 协议的封装
-     * @return null
-     */
-    public ChaosrpcBootstrap protocol(ProtocolConfig protocolConfig) {
-        configuration.setProtocolConfig(protocolConfig);
-        if(log.isDebugEnabled()){
-            log.debug("当前工程使用了：{}协议进行序列化", protocolConfig.toString());
-        }
-        return this;
-    }
-
-    /**
      *  ----- 服务提供方相关的api -----
      */
 

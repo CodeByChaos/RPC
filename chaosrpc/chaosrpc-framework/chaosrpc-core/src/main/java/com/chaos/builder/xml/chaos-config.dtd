@@ -16,6 +16,8 @@
 
         <!ELEMENT serializer EMPTY>
         <!ATTLIST serializer
+                code CDATA #IMPLIED
+                name CDATA #IMPLIED
                 class CDATA #REQUIRED
                 >
         <!ELEMENT serializeType EMPTY>
@@ -25,6 +27,8 @@
 
         <!ELEMENT compressor EMPTY>
         <!ATTLIST compressor
+                code CDATA #IMPLIED
+                name CDATA #IMPLIED
                 class CDATA #REQUIRED
                 >
         <!ELEMENT compressType EMPTY>

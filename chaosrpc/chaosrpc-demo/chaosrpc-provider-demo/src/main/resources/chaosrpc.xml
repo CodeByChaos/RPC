@@ -5,9 +5,10 @@
     <applicationName>chaos-rpc-app</applicationName>
     <!-- 二选一 -->
     <compressType type="gzip"/>
-<!--    <compressor class="com.chaos.compress.impl.GZIPCompressor"/>-->
     <serializeType type="hessian"/>
-<!--    <serializer class="com.chaos.serialize.impl.HessianSerializer" />-->
+<!--    <compressor class="com.chaos.compress.impl.GZIPCompressor" code="1" name="gzip"/>-->
+<!--    <serializer class="com.chaos.serialize.impl.HessianSerializer" code="3" name="hessian"/>-->
+
 
     <registry url="zookeeper://127.0.0.1:2181"/>
     <loadBalancer class="com.chaos.loadbalance.impl.MinResponseTimeLoadBalancer"/>

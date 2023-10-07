@@ -1,7 +1,6 @@
 package com.chaos.config;
 
 import com.chaos.IdGenerator;
-import com.chaos.ProtocolConfig;
 import com.chaos.compress.Compressor;
 import com.chaos.compress.impl.GZIPCompressor;
 import com.chaos.discovery.RegistryConfig;
@@ -28,9 +27,6 @@ public class Configuration {
 
     // 配置信息 ----> 注册中心
     private RegistryConfig registryConfig = new RegistryConfig("zookeeper://127.0.0.1:2181");
-
-    // 配置信息 ----> 序列化协议
-    private ProtocolConfig protocolConfig = new ProtocolConfig("jdk");
 
     // 配置信息 ----> 序列化使用的协议
     private String serializeType = "jdk";

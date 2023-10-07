@@ -1,12 +1,11 @@
 package com.chaos.config;
 
-
 import com.chaos.IdGenerator;
-import com.chaos.ProtocolConfig;
 import com.chaos.compress.Compressor;
 import com.chaos.discovery.RegistryConfig;
 import com.chaos.loadbalance.LoadBalancer;
 import com.chaos.serialize.Serializer;
+import com.chaos.serialize.SerializerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -51,11 +50,17 @@ public class XmlResolver {
             configuration.setApplicationName(resolveApplicationName(doc, xpath));
             configuration.setIdGenerator(resolveIdGenerator(doc, xpath));
             configuration.setRegistryConfig(resolveRegistryConfig(doc, xpath));
+
             configuration.setCompressType(resolveCompressType(doc, xpath));
-//            configuration.setCompressor(resolveCompressor(doc, xpath));
             configuration.setSerializeType(resolveSerializeType(doc, xpath));
-            configuration.setProtocolConfig(new ProtocolConfig(configuration.getSerializeType()));
-//            configuration.setSerializer(resolveSerializer(doc, xpath));
+
+//            ObjectWrapper<Compressor> compressorObjectWrapper = resolveCompressor(doc, xpath);
+//            CompressFactory.addCompressor(compressorObjectWrapper);
+//            ObjectWrapper<Serializer> serializerObjectWrapper = resolveSerializer(doc, xpath);
+//            SerializerFactory.addSerializer(serializerObjectWrapper);
+
+//            configuration.setProtocolConfig(new ProtocolConfig(configuration.getSerializeType()));
+
             configuration.setLoadBalancer(resolveLoadBalancer(doc, xpath));
         }  catch (SAXException | ParserConfigurationException | IOException e) {
             log.info("未发现相关或解析配置文件的时候发生了异常，将选用默认配置", e);
@@ -68,9 +73,12 @@ public class XmlResolver {
      * @param xpath xpath解析器
      * @return 序列化的具体实现
      */
-    private Serializer resolveSerializer(Document doc, XPath xpath) {
+    private ObjectWrapper<Serializer> resolveSerializer(Document doc, XPath xpath) {
         String expression = "/configuration/serializer";
-        return parseObject(doc, xpath, expression, null);
+        Serializer serializer = parseObject(doc, xpath, expression, null);
+        Byte code = Byte.valueOf(Objects.requireNonNull(parseString(doc, xpath, expression, "code")));
+        String name = parseString(doc, xpath, "name");
+        return new ObjectWrapper<>(code, name, serializer);
     }
 
     /**
@@ -101,9 +109,12 @@ public class XmlResolver {
      * @param xpath xpath解析器
      * @return 压缩的具体实现
      */
-    private Compressor resolveCompressor(Document doc, XPath xpath) {
+    private ObjectWrapper<Compressor> resolveCompressor(Document doc, XPath xpath) {
         String expression = "/configuration/compressor";
-        return parseObject(doc, xpath, expression, null);
+        Compressor compressor = parseObject(doc, xpath, expression, null);
+        Byte code = Byte.valueOf(Objects.requireNonNull(parseString(doc, xpath, expression, "code")));
+        String name = parseString(doc, xpath, expression, "name");
+        return new ObjectWrapper<>(code, name, compressor);
     }
 
     /**
