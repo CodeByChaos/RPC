@@ -62,12 +62,12 @@ public class ChaosrpcRequestEncoder extends MessageToByteEncoder<ChaosrpcRequest
         if(chaosrpcRequest.getRequestPlayload() != null ){
             Serializer serializer = SerializerFactory
                     .getSerializer(chaosrpcRequest.getSerializeType())
-                    .getSerializer();
+                    .getImpl();
             body = serializer.serialize(chaosrpcRequest.getRequestPlayload());
             // 2.根据配置的压缩方式进行压缩
             Compressor compressor = CompressFactory
                     .getCompress(chaosrpcRequest.getCompressType())
-                    .getCompressor();
+                    .getImpl();
             body = compressor.compress(body);
 
         }

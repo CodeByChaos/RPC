@@ -110,11 +110,11 @@ public class ChaosrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
         // 有了字节数组之后就可以解压缩，反序列化
         // 解压
         if(playload.length != 0) {
-            Compressor compressor = CompressFactory.getCompress(compressType).getCompressor();
+            Compressor compressor = CompressFactory.getCompress(compressType).getImpl();
             playload = compressor.decompress(playload);
             // 反序列化
             // 1--->jdk
-            Serializer serializer = SerializerFactory.getSerializer(serializeType).getSerializer();
+            Serializer serializer = SerializerFactory.getSerializer(serializeType).getImpl();
             RequestPlayload requestPlayload = serializer.disSerialize(playload, RequestPlayload.class);
             chaosrpcRequest.setRequestPlayload(requestPlayload);
         }

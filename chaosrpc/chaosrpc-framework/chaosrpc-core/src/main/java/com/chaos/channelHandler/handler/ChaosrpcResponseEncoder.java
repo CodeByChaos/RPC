@@ -49,12 +49,12 @@ public class ChaosrpcResponseEncoder extends MessageToByteEncoder<ChaosrpcRespon
         if(chaosrpcResponse.getBody() != null) {
             Serializer serializer = SerializerFactory
                     .getSerializer(chaosrpcResponse.getSerializeType())
-                    .getSerializer();
+                    .getImpl();
             body = serializer.serialize(chaosrpcResponse.getBody());
             // 压缩
             Compressor compressor = CompressFactory
                     .getCompress(chaosrpcResponse.getCompressType())
-                    .getCompressor();
+                    .getImpl();
             body = compressor.compress(body);
 
         }

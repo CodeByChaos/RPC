@@ -1,9 +1,13 @@
 package com.chaos.config;
 
+import com.chaos.compress.CompressFactory;
 import com.chaos.compress.Compressor;
 import com.chaos.loadbalance.LoadBalancer;
 import com.chaos.serialize.Serializer;
+import com.chaos.serialize.SerializerFactory;
 import com.chaos.spi.SpiHandler;
+
+import java.util.List;
 
 /**
  * @author Chaos Wong
@@ -16,17 +20,18 @@ public class SpiResolver {
      */
     public void loadFromSpi(Configuration configuration) {
         // 1.
-        LoadBalancer loadBalancer = SpiHandler.get(LoadBalancer.class);
-        if(loadBalancer != null) {
-            configuration.setLoadBalancer(loadBalancer);
+        List<ObjectWrapper<LoadBalancer>> loadBalancerWrappers = SpiHandler.getList(LoadBalancer.class);
+        // 将其放入工厂
+        if(loadBalancerWrappers.size() > 0) {
+            configuration.setLoadBalancer(loadBalancerWrappers.get(0).getImpl());
         }
-        Compressor compressor = SpiHandler.get(Compressor.class);
-        if(compressor != null) {
-            configuration.setCompressor(compressor);
+        List<ObjectWrapper<Compressor>> compressorWrappers = SpiHandler.getList(Compressor.class);
+        if(compressorWrappers != null) {
+            compressorWrappers.forEach(CompressFactory::addCompressor);
         }
-        Serializer serializer = SpiHandler.get(Serializer.class);
-        if(serializer != null) {
-            configuration.setSerializer(serializer);
+        List<ObjectWrapper<Serializer>> serializerWrappers = SpiHandler.getList(Serializer.class);
+        if(serializerWrappers != null) {
+            serializerWrappers.forEach(SerializerFactory::addSerializer);
         }
     }
 }
