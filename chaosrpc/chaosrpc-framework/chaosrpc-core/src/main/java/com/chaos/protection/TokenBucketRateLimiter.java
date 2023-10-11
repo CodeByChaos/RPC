@@ -4,7 +4,7 @@ package com.chaos.protection;
  * 基于令牌桶算法的限流器
  * @author Chaos Wong
  */
-public class TokenBucketRateLimiter {
+public class TokenBucketRateLimiter implements RateLimiter{
     // 思考？令牌是个啥？令牌桶是个啥？
     // String? Object? list? map?
 

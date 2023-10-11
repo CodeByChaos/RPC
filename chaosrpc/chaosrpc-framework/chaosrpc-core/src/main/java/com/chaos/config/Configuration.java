@@ -6,10 +6,15 @@ import com.chaos.compress.impl.GZIPCompressor;
 import com.chaos.discovery.RegistryConfig;
 import com.chaos.loadbalance.LoadBalancer;
 import com.chaos.loadbalance.impl.RoundRobinLoadBalancer;
+import com.chaos.protection.RateLimiter;
 import com.chaos.serialize.Serializer;
 import com.chaos.serialize.impl.JdkSerializer;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
+import java.net.SocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 全局的配置类，代码配置 ----> xml配置 ----> 默认项
@@ -41,6 +46,9 @@ public class Configuration {
 
     // 配置信息 ----> 负载均衡策略
     private LoadBalancer loadBalancer = new RoundRobinLoadBalancer();
+
+    // 配置信息 ----> 为每一个ip配置一个限流器
+    private Map<SocketAddress, RateLimiter> everyIpRateLimiter = new ConcurrentHashMap<>();
 
     // 读xml，dom4j
     public Configuration() {
