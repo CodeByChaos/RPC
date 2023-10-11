@@ -3,7 +3,9 @@ package com.chaos.channelHandler.handler;
 import com.chaos.ChaosrpcBootstrap;
 import com.chaos.enumeration.ResponseCode;
 import com.chaos.exceptions.ResponseCodeException;
+import com.chaos.loadbalance.LoadBalancer;
 import com.chaos.protection.CircuitBreaker;
+import com.chaos.transport.message.ChaosrpcRequest;
 import com.chaos.transport.message.ChaosrpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -51,6 +53,25 @@ public class MySimpleChannelInboundHandler extends SimpleChannelInboundHandler<C
             log.error("当前id:{}的请求，未找到目标资源，响应码:{}.",
                     chaosrpcResponse.getRequestId(), chaosrpcResponse.getCode());
             throw new ResponseCodeException(code, ResponseCode.RESOURCE_NOT_FOUND.getDescription());
+        } else if(code == ResponseCode.CLOSING.getCode()) {
+            completableFuture.complete(null);
+            if (log.isDebugEnabled()){
+                log.debug("当前id:{}的请求，访问被拒绝，目标服务器正处于关闭中，响应码:{}.",
+                        chaosrpcResponse.getRequestId(), chaosrpcResponse.getCode());
+            }
+            // 修正负载均衡器
+            // 从健康列表中移除
+            ChaosrpcBootstrap.CHANNEL_CACHE.remove(address);
+            // 找到负载均衡器进行reloadBalance
+            LoadBalancer loadBalancer = ChaosrpcBootstrap
+                    .getInstance()
+                    .getConfiguration()
+                    .getLoadBalancer();
+            ChaosrpcRequest chaosrpcRequest = ChaosrpcBootstrap.REQUEST_THREAD_LOCAL.get();
+            loadBalancer.reLoadBalance(chaosrpcRequest.getRequestPlayload().getInterfaceName(),
+                    ChaosrpcBootstrap.CHANNEL_CACHE.keySet().stream().toList());
+
+            throw new ResponseCodeException(code, ResponseCode.CLOSING.getDescription());
         } else if(code == ResponseCode.SUCCESS_HEARTBEAT.getCode()) {
             completableFuture.complete(null);
             if(log.isDebugEnabled()){
