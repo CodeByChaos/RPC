@@ -9,6 +9,6 @@ public class HelloChaosrpcImpl implements HelloChaosrpc {
     @Override
     @TryTimes(tryTimes = 3, intervalTimes = 3000)
     public String sayHi(String msg) {
-        return "hi consumer:" + msg;
+        return "hi consumer" + msg;
     }
 }
