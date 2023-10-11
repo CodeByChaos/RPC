@@ -5,6 +5,7 @@ import com.chaos.channelHandler.handler.ChaosrpcRequestDecoder;
 import com.chaos.channelHandler.handler.ChaosrpcResponseEncoder;
 import com.chaos.channelHandler.handler.MethodCallHandler;
 import com.chaos.config.Configuration;
+import com.chaos.core.ChaosShutdownHook;
 import com.chaos.core.HeartBeatDetector;
 import com.chaos.discovery.RegistryConfig;
 import com.chaos.loadbalance.LoadBalancer;
@@ -130,7 +131,10 @@ public class ChaosrpcBootstrap {
      * 启动netty服务
      */
     public void start() {
-        // 1.创建eventLoop，老板只负责处理请求，之后会将请求分发至worker
+        // 注册一个关闭应用程序的钩子函数
+        Runtime.getRuntime().addShutdownHook(new ChaosShutdownHook());
+
+        // 1.创建eventLoop，boss只负责处理请求，之后会将请求分发至worker
         // 官方默认boss:worker 1:5
         EventLoopGroup boss = new NioEventLoopGroup(2);
         EventLoopGroup worker = new NioEventLoopGroup(10);

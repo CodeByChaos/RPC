@@ -15,7 +15,8 @@ public enum ResponseCode {
     RATE_LIMITER((byte) 31, "服务被限流"),
     RESOURCE_NOT_FOUND((byte) 44, "请求的资源不存在"),
     METHOD_NOT_FOUND((byte) 50, "调用方法发生异常"),
-    FAIL((byte) 2, "失败");
+    FAIL((byte) 2, "失败"),
+    CLOSING((byte) 51,"正在关闭中");
 
     private byte code;
     private String description;

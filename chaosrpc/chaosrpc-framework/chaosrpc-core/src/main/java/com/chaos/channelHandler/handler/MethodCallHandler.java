@@ -2,6 +2,7 @@ package com.chaos.channelHandler.handler;
 
 import com.chaos.ChaosrpcBootstrap;
 import com.chaos.ServiceConfig;
+import com.chaos.core.ShutdownHolder;
 import com.chaos.enumeration.RequestType;
 import com.chaos.enumeration.ResponseCode;
 import com.chaos.protection.RateLimiter;
@@ -30,8 +31,18 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<ChaosrpcReque
         chaosrpcResponse.setRequestId(chaosrpcRequest.getRequestId());
         chaosrpcResponse.setCompressType(chaosrpcRequest.getCompressType());
         chaosrpcResponse.setSerializeType(chaosrpcRequest.getSerializeType());
-        // 2.完成限流相关的操作
+
         Channel channel = channelHandlerContext.channel();
+        // 2.查看关闭的挡板是否打开，如果挡板已经打开，返回一个错误的响应
+        if(ShutdownHolder.BAFFLE.get()) {
+            chaosrpcResponse.setCode(ResponseCode.CLOSING.getCode());
+            channel.writeAndFlush(chaosrpcResponse);
+            return;
+        }
+        // 3.计数器+1
+        ShutdownHolder.REQUEST_COUNTER.increment();
+
+        // 4.限流相关的操作
         SocketAddress address = channel.remoteAddress();
         Map<SocketAddress, RateLimiter> everyIpRateLimiter =
                 ChaosrpcBootstrap.getInstance().getConfiguration().getEveryIpRateLimiter();
@@ -41,6 +52,8 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<ChaosrpcReque
             everyIpRateLimiter.put(address, rateLimiter);
         }
         boolean allowRequest = rateLimiter.allowRequest();
+
+        // 5.处理请求的逻辑
         // 限流
         if(!allowRequest) {
             // 需要封装响应并且返回了
@@ -68,10 +81,15 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<ChaosrpcReque
                 log.error("请求id:{}在调用过程发生异常.", chaosrpcRequest.getRequestId() ,e);
                 chaosrpcResponse.setCode(ResponseCode.FAIL.getCode());
             }
-            // 4.写出响应
+
 
         }
+
+        // 6.写出响应
         channel.writeAndFlush(chaosrpcResponse);
+
+        // 7.计数器-1
+        ShutdownHolder.REQUEST_COUNTER.decrement();
     }
 
     private Object callTargetMethod(RequestPlayload requestPlayload) {
