@@ -4,7 +4,7 @@ import com.chaos.HelloChaosrpc;
 import com.chaos.annotation.ChaosApi;
 import com.chaos.annotation.TryTimes;
 
-@ChaosApi
+@ChaosApi(group = "primary")
 public class HelloChaosrpcImpl implements HelloChaosrpc {
     @Override
     @TryTimes(tryTimes = 3, intervalTimes = 3000)

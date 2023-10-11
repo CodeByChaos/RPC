@@ -10,6 +10,7 @@ import com.chaos.protection.CircuitBreaker;
 import com.chaos.protection.RateLimiter;
 import com.chaos.serialize.Serializer;
 import com.chaos.serialize.impl.JdkSerializer;
+import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,6 +53,9 @@ public class Configuration {
     private final Map<SocketAddress, RateLimiter> everyIpRateLimiter = new ConcurrentHashMap<>();
     // 配置信息 ----> 为每一个ip配置一个断路器
     private final Map<SocketAddress, CircuitBreaker> everyIpCircuitBreaker = new ConcurrentHashMap<>();
+
+    // 配置信息 ----> group名，默认default
+    private String group = "default";
 
     // 读xml，dom4j
     public Configuration() {

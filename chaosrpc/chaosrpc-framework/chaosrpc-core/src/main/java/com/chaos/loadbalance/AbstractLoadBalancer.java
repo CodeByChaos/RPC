@@ -13,7 +13,7 @@ public abstract class AbstractLoadBalancer implements LoadBalancer{
     private Map<String, Selector> cache = new ConcurrentHashMap<>(8);
 
     @Override
-    public InetSocketAddress selectServiceAddress(String serviceName) {
+    public InetSocketAddress selectServiceAddress(String serviceName, String group) {
         // 1.优先从cache中获取一个选择器
         Selector selector = cache.get(serviceName);
 
@@ -25,7 +25,7 @@ public abstract class AbstractLoadBalancer implements LoadBalancer{
                     .getConfiguration()
                     .getRegistryConfig()
                     .getRegistry()
-                    .lookup(serviceName);
+                    .lookup(serviceName, group);
             // 提供一些算法负责选取合适的节点
             selector = getSelector(serviceList);
 

@@ -44,6 +44,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
     // 此处需要应该注册中心，和一个接口
     private Registry registry;
     private Class<?> interfaceConsumer;
+    private String group;
 
     /**
      * 所有的方法调用，本质都会走到这里
@@ -117,7 +118,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
 //        InetSocketAddress address = registry.lookup(interfaceConsumer.getName());
             InetSocketAddress address = ChaosrpcBootstrap
                     .getInstance().getConfiguration().getLoadBalancer()
-                    .selectServiceAddress(interfaceConsumer.getName());
+                    .selectServiceAddress(interfaceConsumer.getName(), group);
             if (log.isDebugEnabled()) {
                 log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
             }

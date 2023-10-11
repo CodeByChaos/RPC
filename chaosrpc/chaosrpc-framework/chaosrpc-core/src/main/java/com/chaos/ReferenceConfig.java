@@ -12,6 +12,8 @@ public class ReferenceConfig<T> {
 
     private Registry registry;
 
+    private String group;
+
     public Class<T> getInterface() {
         return interfaceConsumer;
     }
@@ -36,10 +38,18 @@ public class ReferenceConfig<T> {
         // 此处一定是使用动态代理完成了一些工作
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         Class<T>[] classes = new Class[]{interfaceConsumer};
-        InvocationHandler handler = new RPCComsumerInvocationHandler(registry, interfaceConsumer);
+        InvocationHandler handler = new RPCComsumerInvocationHandler(registry, interfaceConsumer, group);
 
         // 使用动态代理生成代理对象
         Object helloProxy = Proxy.newProxyInstance(classLoader, classes, handler);
         return (T)helloProxy;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public String getGroup() {
+        return group;
     }
 }
