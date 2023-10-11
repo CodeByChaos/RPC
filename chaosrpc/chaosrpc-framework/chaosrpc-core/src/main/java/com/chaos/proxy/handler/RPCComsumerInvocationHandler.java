@@ -8,6 +8,7 @@ import com.chaos.NettyBootstrapInitializer;
 import com.chaos.compress.CompressFactory;
 import com.chaos.discovery.Registry;
 import com.chaos.enumeration.RequestType;
+import com.chaos.protection.CircuitBreaker;
 import com.chaos.serialize.SerializerFactory;
 import com.chaos.transport.message.ChaosrpcRequest;
 import com.chaos.transport.message.RequestPlayload;
@@ -21,10 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.net.SocketAddress;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.*;
 
 /**
  * 该类封装了客户端通信的基础逻辑，每一个代理对象的远程调用过程都封装在了invoke方法中
@@ -70,6 +72,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
 //        log.info("methods---->{}", method);
 //        log.info("args---->{}", args);
 
+
         // 从接口中获取判断是否需要重试
         TryTimes tryTimesAnnotation = interfaceConsumer.getAnnotation(TryTimes.class);
         // 默认值
@@ -81,48 +84,81 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
         }
         int maxTryTimes = tryTimes;
         while(true) {
+
             // 什么情况下需要重试    1.异常    2.异常有问题 code == 500
-            try {
-                /*
-                 * --------------封装报文--------------
-                 */
-                RequestPlayload requestPlayload = RequestPlayload.builder()
-                        .interfaceName(interfaceConsumer.getName())
-                        .methodName(method.getName())
-                        .parametersType(method.getParameterTypes())
-                        .parametersValue(args)
-                        .returnType(method.getReturnType())
-                        .build();
-                // 需要对各种请求id和各种类型做处理
-                ChaosrpcRequest chaosrpcRequest = ChaosrpcRequest.builder()
-                        .requestId(ChaosrpcBootstrap.getInstance().getConfiguration().getIdGenerator().getId())
-                        .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.getInstance().getConfiguration().getCompressType()).getCode())
-                        .requestType(RequestType.REQUEST.getId())
-                        .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.getInstance().getConfiguration().getSerializeType()).getCode())
-                        .timeStamp(System.currentTimeMillis())
-                        .requestPlayload(requestPlayload)
-                        .build();
 
-                // 将请求存入threadLocal，需要在合适的时候调用remove
-                ChaosrpcBootstrap.REQUEST_THREAD_LOCAL.set(chaosrpcRequest);
+            /*
+             * --------------1.封装报文--------------
+             */
+            RequestPlayload requestPlayload = RequestPlayload.builder()
+                    .interfaceName(interfaceConsumer.getName())
+                    .methodName(method.getName())
+                    .parametersType(method.getParameterTypes())
+                    .parametersValue(args)
+                    .returnType(method.getReturnType())
+                    .build();
+            // 需要对各种请求id和各种类型做处理
+            ChaosrpcRequest chaosrpcRequest = ChaosrpcRequest.builder()
+                    .requestId(ChaosrpcBootstrap.getInstance().getConfiguration().getIdGenerator().getId())
+                    .compressType(CompressFactory.getCompress(ChaosrpcBootstrap.getInstance().getConfiguration().getCompressType()).getCode())
+                    .requestType(RequestType.REQUEST.getId())
+                    .serializeType(SerializerFactory.getSerializer(ChaosrpcBootstrap.getInstance().getConfiguration().getSerializeType()).getCode())
+                    .timeStamp(System.currentTimeMillis())
+                    .requestPlayload(requestPlayload)
+                    .build();
+
+            // 2.将请求存入threadLocal，需要在合适的时候调用remove
+            ChaosrpcBootstrap.REQUEST_THREAD_LOCAL.set(chaosrpcRequest);
 
 
-                // 1.发现服务，从注册中心拉取服务列表，并通过客户端负载均衡寻找一个可用的服务
-                // 传入服务的名字，返回一个ip:port
-                // 尝试获取当前配置的负载均衡器，选取一个可用节点
+            // 3.发现服务，从注册中心拉取服务列表，并通过客户端负载均衡寻找一个可用的服务
+            // 传入服务的名字，返回一个ip:port
+            // 尝试获取当前配置的负载均衡器，选取一个可用节点
 //        InetSocketAddress address = registry.lookup(interfaceConsumer.getName());
-                InetSocketAddress address = ChaosrpcBootstrap
-                        .getInstance().getConfiguration().getLoadBalancer()
-                        .selectServiceAddress(interfaceConsumer.getName());
-                if (log.isDebugEnabled()) {
-                    log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
+            InetSocketAddress address = ChaosrpcBootstrap
+                    .getInstance().getConfiguration().getLoadBalancer()
+                    .selectServiceAddress(interfaceConsumer.getName());
+            if (log.isDebugEnabled()) {
+                log.debug("服务调用方，发现了服务{}的可用主机{}", interfaceConsumer.getName(), address);
+            }
+
+            // 4.获取当前地址所对应的断路器，如果断路器是打开的则不发送请求，抛出异常
+            Map<SocketAddress, CircuitBreaker> everyIpCircuitBreaker =
+                    ChaosrpcBootstrap.getInstance().getConfiguration().getEveryIpCircuitBreaker();
+            CircuitBreaker circuitBreaker = everyIpCircuitBreaker.get(address);
+            if(circuitBreaker == null) {
+                circuitBreaker = new CircuitBreaker(10, 0.5F);
+                everyIpCircuitBreaker.put(address, circuitBreaker);
+            }
+
+            try {
+                // 如果断路器是打开的
+                if(chaosrpcRequest.getRequestType() != RequestType.HEARTBEAT.getId()
+                        && circuitBreaker.isBreak()) {
+                    // todo 定时器失效？？？
+                    // 定期打开
+                    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+//                    Timer timer = new Timer();
+//                    timer.schedule(new TimerTask() {
+//                        @Override
+//                        public void run() {
+//                            YrpcBootstrap.getInstance()
+//                                    .getConfiguration().getEveryIpCircuitBreaker()
+//                                    .get(address).reset();
+//                        }
+//                    }, 5000);
+                    executorService.schedule(() -> ChaosrpcBootstrap.getInstance()
+                            .getConfiguration().getEveryIpCircuitBreaker()
+                            .get(address).reset(), 5, TimeUnit.SECONDS);
+                    throw new RuntimeException("当前断路器已经开启，无法发送请求");
                 }
+
                 // 使用netty连接服务器，发送调用的服务的名字+方法名字+参数列表，得到结果
                 // 定义线程池，EventLoopGroup
                 // q:整个连接过程放在此处是否可行？也就意味着每次调用都会产生一个新的netty连接。如何缓存我们的连接？
                 // 每次在此处建立一个新的连接是不合适的
                 // 解决方案？缓存channel，尝试从缓存中获取channel，如果未获取，则创建新的连接，并进行缓存
-                // 2.尝试从全局缓存中获取一个可用channel
+                // 5.尝试从全局缓存中获取一个可用channel
                 Channel channel = getAvailableChannel(address);
                 if (log.isDebugEnabled()) {
                     log.debug("获取了和{}建立的连接通道，准备发送数据", interfaceConsumer.getName());
@@ -147,7 +183,7 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
                 /*
                  * --------------异步策略--------------
                  */
-                // 4.写出报文
+                // 6.写出报文
                 CompletableFuture<Object> completableFuture = new CompletableFuture<>();
                 // 需要将 completableFuture 暴露出去
                 ChaosrpcBootstrap.PENDING_REQUEST.put(chaosrpcRequest.getRequestId(), completableFuture);
@@ -171,24 +207,28 @@ public class RPCComsumerInvocationHandler implements InvocationHandler {
                         });
 //                Object o = completableFuture.get(3, TimeUnit.SECONDS);
 
-                // 清理threadLocal
+                // 7.清理threadLocal
                 ChaosrpcBootstrap.REQUEST_THREAD_LOCAL.remove();
                 // 如果没有地方处理 completableFuture 这里会阻塞，等待complete()的执行
                 // q:需要在哪调用complete方法得到结果，很明显 pipeline 中最终的handler的处理结果
-                // 获得响应的结果
-                return completableFuture.get(10, TimeUnit.SECONDS);
+                // 8.获得响应的结果
+                Object result = completableFuture.get(10, TimeUnit.SECONDS);
+                // 记录成功的请求
+                circuitBreaker.recordRequest();
+                return result;
             } catch (Exception e) {
                 // 次数减一，并且等待固定时间，固定时间有一定的问题，重试风暴
                 tryTimes--;
+                // 记录错误的次数
+                circuitBreaker.recordErrorRequest();
                 try{
                     Thread.sleep(intervalTime);
                 } catch (InterruptedException ex) {
                     log.error("在进行重试时发生异常.", ex);
                 }
-
                 if(tryTimes < 0) {
+                    log.error("对方法{}进行远程调用时，重试{}次，依然不可调用.", method.getName(), maxTryTimes - tryTimes);
                     break;
-//                    log.error("对方法{}进行远程调用时，重试{}次，依然不可调用.", method.getName(), maxTryTimes - tryTimes);
                 }
                 log.error("在进行第{}重试时发生异常.", maxTryTimes - tryTimes, e);
             }

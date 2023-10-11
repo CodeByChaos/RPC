@@ -1,7 +1,9 @@
 package com.chaos;
 
 import com.chaos.discovery.RegistryConfig;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ConsumerApplication {
     public static void main(String[] args) {
         // 想尽一切办法获取代理对象，使用ReferenceConfig进行封装
@@ -22,10 +24,10 @@ public class ConsumerApplication {
                 .reference(reference);
 
         // 获取一个代理对象
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 500; i++) {
             HelloChaosrpc helloChaosrpc = reference.get();
             String s = helloChaosrpc.sayHi("你好");
-            System.out.println(s);
+            log.info("say hi ----> {}", s);
         }
     }
 }

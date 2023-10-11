@@ -37,7 +37,7 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<ChaosrpcReque
                 ChaosrpcBootstrap.getInstance().getConfiguration().getEveryIpRateLimiter();
         RateLimiter rateLimiter = everyIpRateLimiter.get(address);
         if(rateLimiter == null) {
-            rateLimiter = new TokenBucketRateLimiter(500, 300);
+            rateLimiter = new TokenBucketRateLimiter(20, 20);
             everyIpRateLimiter.put(address, rateLimiter);
         }
         boolean allowRequest = rateLimiter.allowRequest();
