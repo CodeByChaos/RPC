@@ -1,5 +1,8 @@
 package com.chaos.exceptions;
 
+/**
+ * @author WongYut
+ */
 public class CompressException extends RuntimeException{
     public CompressException() {
     }

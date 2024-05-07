@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 /**
  * 请求id生成器
+ * @author WongYut
  */
 public class IdGenerator {
 
@@ -46,7 +47,9 @@ public class IdGenerator {
     private long dataCenterId;
     private long machineId;
 //    private long sequenceId = 0L;
-    private LongAdder sequenceId = new LongAdder(); // 解决线程安全问题
+
+    // 解决线程安全问题
+    private LongAdder sequenceId = new LongAdder();
 
     // 时钟回拨问题
     private long lastTimeStamp = -1L;

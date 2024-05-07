@@ -1,7 +1,7 @@
 package com.chaos.netty;
 
 /**
- * @author Chaos Wong
+ * @author WongYut
  */
 public class HookDemo {
     public static void main(String[] args) {

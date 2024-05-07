@@ -1,7 +1,7 @@
 package com.chaos.exceptions;
 
 /**
- * @author Chaos Wong
+ * @author WongYut
  */
 public class ResponseCodeException extends RuntimeException{
     private final byte code;

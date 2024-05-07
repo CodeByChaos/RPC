@@ -1,6 +1,6 @@
 package com.chaos.impl;
 
-import com.chaos.HelloChaosrpc;
+import com.chaos.service.HelloChaosrpc;
 import com.chaos.annotation.ChaosApi;
 import com.chaos.annotation.TryTimes;
 

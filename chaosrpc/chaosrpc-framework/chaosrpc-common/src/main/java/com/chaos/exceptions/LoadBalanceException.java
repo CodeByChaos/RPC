@@ -1,5 +1,8 @@
 package com.chaos.exceptions;
 
+/**
+ * @author WongYut
+ */
 public class LoadBalanceException extends RuntimeException{
     public LoadBalanceException() {
     }

@@ -1,8 +1,12 @@
 package com.chaos;
 
 import com.chaos.discovery.RegistryConfig;
+import com.chaos.service.HelloChaosrpc;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author WongYut
+ */
 @Slf4j
 public class ConsumerApplication {
     public static void main(String[] args) {

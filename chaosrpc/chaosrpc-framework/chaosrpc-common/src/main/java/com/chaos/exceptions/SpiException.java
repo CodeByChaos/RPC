@@ -1,7 +1,7 @@
 package com.chaos.exceptions;
 
 /**
- * @author Chaos Wong
+ * @author WongYut
  */
 public class SpiException extends RuntimeException{
     public SpiException() {

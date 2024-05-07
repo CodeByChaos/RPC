@@ -9,6 +9,9 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+/**
+ * @author WongYut
+ */
 @Slf4j
 public class NetUtils {
 

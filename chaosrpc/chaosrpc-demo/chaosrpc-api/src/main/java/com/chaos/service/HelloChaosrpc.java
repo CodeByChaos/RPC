@@ -1,5 +1,8 @@
-package com.chaos;
+package com.chaos.service;
 
+/**
+ * @author WongYut
+ */
 public interface HelloChaosrpc {
 
     /**

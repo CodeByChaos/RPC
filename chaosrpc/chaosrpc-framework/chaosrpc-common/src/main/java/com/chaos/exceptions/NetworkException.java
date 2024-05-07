@@ -1,5 +1,8 @@
 package com.chaos.exceptions;
 
+/**
+ * @author WongYut
+ */
 public class NetworkException extends RuntimeException{
     public NetworkException() {
     }

@@ -1,11 +1,12 @@
-package com.chaos;
+package com.chaos.controller;
 
+import com.chaos.service.HelloChaosrpc;
 import com.chaos.annotation.ChaosService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * @author Chaos Wong
+ * @author WongYut
  */
 @RestController
 public class HelloController {

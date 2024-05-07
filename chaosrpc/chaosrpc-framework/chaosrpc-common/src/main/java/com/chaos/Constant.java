@@ -1,5 +1,8 @@
 package com.chaos;
 
+/**
+ * @author WongYut
+ */
 public class Constant {
 
     // zookeeper默认连接地址

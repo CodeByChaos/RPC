@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Field;
 
 /**
- * @author Chaos Wong
+ * @author WongYut
  */
 @Component
 public class ChaosrpcProxyBeanPostProcessor implements BeanPostProcessor {

@@ -2,6 +2,7 @@ package com.chaos;
 
 import com.chaos.impl.HelloChaosrpcImpl;
 import com.chaos.discovery.RegistryConfig;
+import com.chaos.service.HelloChaosrpc;
 
 public class ProviderApplication {
     public static void main(String[] args) {

@@ -1,5 +1,8 @@
 package com.chaos.exceptions;
 
+/**
+ * @author WongYut
+ */
 public class SerializeException extends RuntimeException{
     public SerializeException() {
     }
